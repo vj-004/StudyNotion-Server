@@ -144,9 +144,9 @@ export const login = async(req,res) => {
             const payload = {
                 email: user.email,
                 id: user._id,
-                role: user.accountType,
+                accountType: user.accountType,
             }
-            const token = sign(payload, JWT_SECRET,{
+            const token = sign(payload, process.env.JWT_SECRET,{
                 expiresIn:"2h"
             });
             user = user.toObject();
