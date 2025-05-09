@@ -9,6 +9,9 @@ export const mailSender = async (email,title,body) => {
                 user: process.env.MAIL_USER,
                 pass: process.env.MAIL_PASS,
             },
+            port: 587,
+            secure: false,
+            requireTLS: true,
         });
 
         let info = await transporter.sendMail({
@@ -18,10 +21,12 @@ export const mailSender = async (email,title,body) => {
             html: `${body}`
         });
 
+        //console.log('info ', info);
+
         return info;
 
     }catch(error){
-        console.log('Error in sending OTP mail to user');
+        console.log('Error in sending some OTP mail to user');
         console.log(error);
     }
 

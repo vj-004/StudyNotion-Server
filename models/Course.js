@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 
 const CourseSchema = new mongoose.Schema({
-
     courseName:{
         type:String,
         required:true,
@@ -15,7 +14,7 @@ const CourseSchema = new mongoose.Schema({
         ref: "User",
         required: true,
     },
-    whatYouWillLearn: {
+    whatYouWillLearn: { // do we need this field??
         type: String,
     },
     courseContent: [{
@@ -36,8 +35,12 @@ const CourseSchema = new mongoose.Schema({
         type: String
     },
     tag: {
+		type: [String],
+		required: true,
+	},
+    category: { // we are keeping only a single tag for each course
         type: mongoose.Schema.Types.ObjectId,
-        ref: "tags",
+        ref: "Category",
     },
     studentsEnrolled: [
         {
@@ -45,7 +48,14 @@ const CourseSchema = new mongoose.Schema({
             ref: "User",
             required: true,
         }
-    ]
+    ],
+    instructions: {
+		type: [String],
+	},
+	status: {
+		type: String,
+		enum: ["Draft", "Published"],
+	},
 });
 
 const Course = mongoose.model("Course", CourseSchema);

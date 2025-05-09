@@ -1,7 +1,7 @@
-import { verify } from "jsonwebtoken";
-import { returnResponse } from "../utils/specialUtils"
+import jwt from "jsonwebtoken";
+import { returnResponse } from "../utils/specialUtils.js"
 
-export const auth = async (req,res,next) => {
+const auth = async (req,res,next) => {
     try{
 
         const token = req.cookies.token || 
@@ -14,15 +14,15 @@ export const auth = async (req,res,next) => {
 
         try{
 
-            const decode = verify(token,process.env.JWT_SECRET);
-            console.log(decode);
-            req.user = decode;  
-
+            const decode = jwt.verify(token,process.env.JWT_SECRET);
+            req.user = decode;
+            
         }catch(error){
             return returnResponse(res,401,false,"token is invalid");
         }
 
         next();
+
     }catch(error){
         return returnResponse(res,500,false,"You are unauthenticated, Please login first");
     }
@@ -60,3 +60,5 @@ export const isInstructor = async (req,res,next) => {
         return returnResponse(res,500,false,"User role cannot be verified");
     }
 }
+
+export default auth;

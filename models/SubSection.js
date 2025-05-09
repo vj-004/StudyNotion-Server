@@ -13,9 +13,11 @@ const SubSectionSchema = new mongoose.Schema({
     },
     videoUrl:{
         type:String,
-    }
-    
+    },
+    publicId:{
+        type:String,
+    },  
 });
 
-const SubSection = mongoose.model("CourseProgress", SubSectionSchema);
+const SubSection = mongoose.model("SubSection", SubSectionSchema);
 export default SubSection;
