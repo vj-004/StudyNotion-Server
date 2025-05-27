@@ -14,17 +14,22 @@ export const uploadImage = async (file,folder,height,quality) => {
 
 export const deleteImage = async (publicId) => {
 
+    //console.log('public id',publicId);
+    const publicIdToken = publicId.split("/");
+    const location = (publicIdToken.at(-2)+'/'+publicIdToken.at(-1)).split(".").at(0);
     const options = {
         resource_type: "image"
     };
-    return await cloudinary.uploader.destroy(`${publicId}`,options);
+    return await cloudinary.uploader.destroy(`${location}`);
 
 }
 
 export const deleteVideo = async (publicId) => {
+    const publicIdToken = publicId.split("/");
+    const location = (publicIdToken.at(-2)+'/'+publicIdToken.at(-1)).split(".").at(0);
     const options = {
         resource_type: "video"
     };
-    return await cloudinary.uploader.destroy(`${publicId}`,options);
+    return await cloudinary.uploader.destroy(`${location}`);
 }
 

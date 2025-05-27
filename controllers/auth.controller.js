@@ -5,6 +5,7 @@ import { returnResponse } from "../utils/specialUtils.js";
 import { compare, hash } from "bcrypt";
 import Profile from "../models/Profile.js";
 import jwt from "jsonwebtoken";
+import { mailSender } from "../utils/mailSender.js";
 
 export const sendOtp = async (req,res) => {
     
@@ -27,7 +28,7 @@ export const sendOtp = async (req,res) => {
 
 
         //check unique otp
-        //bad way to check ofr unique otp
+        //bad way to check of unique otp
         let result = await OTP.findOne({otp: otp});
 
         while(result){
@@ -45,7 +46,6 @@ export const sendOtp = async (req,res) => {
         res.status(200).json({
             success: true,
             message: "OTP sent successfully",
-            OTP: otp
         })
 
 
@@ -103,7 +103,7 @@ export const signUp = async (req,res) => {
         const profileDeatils = await Profile.create({
             gender: null,
             dateOfBirth: null,
-            contactNumber,
+            contactNumber: null,
             about: null
         });
 
@@ -138,7 +138,7 @@ export const login = async(req,res) => {
         if(!email || !password){
             return returnResponse(res,403,false,"All fields are required, Please try again");
         }
-        const user = await User.findOne({email});
+        const user = await User.findOne({email}).populate("additionalDetails").exec();
 
         if(!user){
             return returnResponse(res,401,false,"User does not exist, Please Sign Up");
@@ -183,16 +183,16 @@ export const changePassword = async (req,res) => {
     try{
 
         // change password and forgot password are slightly different, this is change password
-        const {email,oldPassword,newPassword,confirmNewPassword} = req.body;
+        const {email,newPassword,confirmNewPassword} = req.body;
         
-        if(!oldPassword || !newPassword || !confirmNewPassword){
+        if( !newPassword || !confirmNewPassword){
             return returnResponse(res,403,false,"All fields required while changing password");
         }
         if(newPassword !== confirmNewPassword){
             return returnResponse(res,401,false,"New password does not match confirmed new password");
         }
 
-        const hashedPassword = hash(newPassword);
+        const hashedPassword = await hash(newPassword,10);
 
         const user = await User.findOneAndUpdate(
             {email},
@@ -200,7 +200,7 @@ export const changePassword = async (req,res) => {
             {new:true}
         );
 
-        console.log("User after changing password",user);
+        //console.log("User after changing password",user);
 
         const mailResponse = mailSender(email,'StudyNotion',"Password Changed Successfully");
 

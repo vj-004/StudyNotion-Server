@@ -10,6 +10,7 @@ import { UserRoutes } from "./routes/user.routes.js";
 import { ProfileRoutes } from "./routes/profile.routes.js";
 import { PaymentRoutes } from "./routes/payment.routes.js";
 import { CourseRoutes } from "./routes/course.routes.js";
+import { ContactUsRoutes } from "./routes/contactUs.routes.js";
 
 dotenv.config();
 const PORT = process.env.PORT || 4000;
@@ -38,6 +39,7 @@ app.use('/api/v1/auth',UserRoutes); // user routes
 app.use('/api/v1/profile',ProfileRoutes); // profile routes
 app.use('/api/v1/payment',PaymentRoutes); // payments routes
 app.use('/api/v1/course',CourseRoutes); // course routes
+app.use('/api/v1/reach', ContactUsRoutes);
 
 app.get('/', (req,res) => {
     return returnResponse(res,200,true,"Your server is up and running...");

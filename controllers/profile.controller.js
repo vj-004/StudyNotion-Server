@@ -1,18 +1,16 @@
 import Course from "../models/Course.js";
 import Profile from "../models/Profile.js";
 import User from "../models/User.js";
-import { uploadImage } from "../utils/cloudinaryUtils.js";
+import { deleteImage, uploadImage } from "../utils/cloudinaryUtils.js";
 import { returnResponse } from "../utils/specialUtils.js";
 
 export const updateProfile = async (req,res) => {
     try{
-
         const {gender,contactNumber,dateOfBirth,about} = req.body;
         const id = req.user.id;
         if(!gender && !contactNumber && !dateOfBirth && !about){
             return returnResponse(res,200,true,"Nothing to update. Updated Successfully");
         }
-
         const userDetails = await User.findById(id);
         const profileId = userDetails.additionalDetails;
         const updatedProfileDetails = await Profile.findByIdAndUpdate(profileId,{
@@ -39,9 +37,8 @@ export const updateProfile = async (req,res) => {
 //what is a CRON JOB ??
 export const deleteAccount = async (req,res) => {
     try{
-        console.log('user: ', req.user);
-        const id = req.user.id;
-        const userDetails = await User.findById(id);
+        const email = req.body.email;
+        const userDetails = await User.findOne({email});
 
         if(!userDetails){
             return returnResponse(res,404,false,"User not found");
@@ -60,7 +57,7 @@ export const deleteAccount = async (req,res) => {
                 
             }
         }
-        await User.findByIdAndDelete(id);
+        await User.findOneAndDelete({email});
         //TODO: need to delete the thubnail also....
         return returnResponse(res,200,true,"User deleted successfully");
 
@@ -80,17 +77,27 @@ export const updateDisplayPicture = async (req, res) => {
         1000,
         1000
       )
-      console.log(image)
+      //I want to delete the previous image which I had.
+
+      const currentUser = await User.findById(userId);
+      if(currentUser.image){
+        const deletedImage = await deleteImage(currentUser.image);
+      }
+
       const updatedProfile = await User.findByIdAndUpdate(
         { _id: userId },
         { image: image.secure_url },
         { new: true }
-      )
+      );
+
+
+
       res.send({
         success: true,
         message: `Image Updated successfully`,
         data: updatedProfile,
-      })
+      });
+
     } catch (error) {
       return res.status(500).json({
         success: false,

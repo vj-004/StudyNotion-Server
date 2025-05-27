@@ -56,6 +56,9 @@ const CourseSchema = new mongoose.Schema({
 		type: String,
 		enum: ["Draft", "Published"],
 	},
+    progressPercentage: {
+        type: Number,
+    }
 });
 
 const Course = mongoose.model("Course", CourseSchema);
