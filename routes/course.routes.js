@@ -1,10 +1,11 @@
 import { Router } from "express";
 import auth, { isAdmin, isInstructor, isStudent } from "../middlewares/auth.js";
-import { createCourse, getCourseDetails, showAllCourses } from "../controllers/course.controller.js";
+import { createCourse, editCourse, getCourseDetails, getDraftCourse, showAllCourses } from "../controllers/course.controller.js";
 import { createSection, deleteSection, updateSection } from "../controllers/section.controller.js";
 import { createSubSection, deleteSubSection, updateSubSection } from "../controllers/subSection.controller.js";
 import { categoryPageDetails, createCategory, showAllCategories } from "../controllers/category.controller.js";
 import { createRating, getAllRatings, getAvgRating } from "../controllers/ratingsAndReview.controller.js";
+
 
 export const CourseRoutes = Router();
 
@@ -30,6 +31,10 @@ CourseRoutes.post("/addSubSection", auth, isInstructor, createSubSection);
 CourseRoutes.get("/getAllCourses", showAllCourses);
 // Get Details for a Specific Courses
 CourseRoutes.post("/getCourseDetails", getCourseDetails);
+//Get details of a course if it is saved as draft
+CourseRoutes.get('/getDraftCourse', auth, isInstructor, getDraftCourse);
+//Edit the course with new formData
+CourseRoutes.post('/edit-course',auth, isInstructor, editCourse);
 
 // ********************************************************************************************************
 //                                      Category routes (Only by Admin)

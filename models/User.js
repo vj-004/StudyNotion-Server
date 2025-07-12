@@ -44,8 +44,15 @@ const UserSchema = new mongoose.Schema(
         },
         courseProgress:[
             {
-                type: mongoose.Schema.Types.ObjectId,
-                ref:"CourseProgress",
+                courseId:{
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref:"CourseProgress",
+                },
+                progressPercentage: {
+                    type: Number,
+                    required: true,
+                    default: 0,
+                }
             }
         ],
         token:{
