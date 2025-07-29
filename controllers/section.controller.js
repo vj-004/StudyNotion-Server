@@ -1,5 +1,6 @@
 import Course from "../models/Course.js";
 import Section from "../models/Section.js";
+import SubSection from "../models/SubSection.js";
 import { returnResponse } from "../utils/specialUtils.js";
 
 export const createSection = async (req,res) => {
@@ -21,7 +22,7 @@ export const createSection = async (req,res) => {
         }
 
         console.log(updatedCourse);
-        return returnResponse(res,200,true,"Section created and Course updated successfully");
+        return returnResponse(res,200,true,"Section created and Course updated successfully", newSection);
 
     }catch(error){
         console.log(error);
@@ -75,6 +76,10 @@ export const deleteSection = async (req,res) => {
             return returnResponse(res,404,false,"Course not found");
         }
         const deletedSection = await Section.findByIdAndDelete(sectionId);
+        for(let subSectionId in deleteSection.subSection){
+            const subSectionDeleted = await SubSection.findByIdAndDelete(subSectionId);
+        }
+
         console.log('Deleted section', deletedSection);
         return returnResponse(res,200,true,"Deleted Section Successfully");
 

@@ -6,20 +6,23 @@ import { returnResponse } from "../utils/specialUtils.js";
 
 export const createSubSection = async (req,res) => {
     try{
-        //videUrl we will only have to create right
-        const {title,timeDuration,description,sectionId} = req.body;
-        const videoFile = req.files.videoFile;
-
-        if(!title || !timeDuration || !description || !videoFile || !sectionId){
-            return returnResponse(res,400,false,"Please enter all the fields");
+        const { sectionId, title, description } = req.body
+        const video = req.files?.video
+    
+        // Check if all necessary fields are provided
+        if (!sectionId || !title || !description || !video) {
+            return res
+            .status(404)
+            .json({ success: false, message: "All Fields are Required" })
         }
-
-        const uploaDetails = await uploadImage(videoFile,process.env.COURSES_VIDEOS_FOLDER);
+        console.log(video)
+        console.log('uploading videos');
+        const uploaDetails = await uploadImage(video,process.env.COURSES_VIDEOS_FOLDER);
         const videoUrl =  uploaDetails.secure_url; 
-
+        console.log('done uploading videos');
         const subSectionDetails = await SubSection.create({
             title: title,
-            timeDuration: timeDuration,
+            // timeDuration: timeDuration,
             description: description,
             videoUrl: videoUrl,
             publicId: uploaDetails.public_id

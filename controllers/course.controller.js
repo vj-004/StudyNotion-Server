@@ -139,7 +139,15 @@ export const getDraftCourse = async (req,res) => {
         const draftCourse = await Course.findOne({
             instructor: id,
             status: "Draft"
-        });
+        })
+        .populate({
+            path: "courseContent",
+            populate:{
+                path: "subSection",
+            }
+        })
+        .exec();
+        ;
 
         if(!draftCourse){
             return returnResponse(res,200,true,"No draft course", draftCourse);
