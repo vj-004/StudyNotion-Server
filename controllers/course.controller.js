@@ -148,9 +148,9 @@ export const getDraftCourse = async (req,res) => {
         })
         .exec();
         ;
-
+        console.log('draft course: ', draftCourse);
         if(!draftCourse){
-            return returnResponse(res,200,true,"No draft course", draftCourse);
+            return returnResponse(res,200,false,"No draft course", draftCourse);
         }
 
         return returnResponse(res,200,true,"Draft course found", draftCourse);
@@ -165,7 +165,14 @@ export const editCourse = async(req, res) => {
 
     const formData = req.body;
     
-    const course_to_edit = await Course.findById(formData.courseId);
+    const course_to_edit = await Course.findById(formData.courseId).populate({
+            path: "courseContent",
+            populate:{
+                path: "subSection",
+            }
+        })
+        .exec();
+        ;
 
     if(!course_to_edit){
         return returnResponse(res,404,false,"Course not found");

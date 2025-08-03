@@ -8,7 +8,7 @@ export const createSubSection = async (req,res) => {
     try{
         const { sectionId, title, description } = req.body
         const video = req.files?.video
-    
+        console.log(video)
         // Check if all necessary fields are provided
         if (!sectionId || !title || !description || !video) {
             return res
@@ -55,7 +55,7 @@ export const createSubSection = async (req,res) => {
 export const deleteSubSection = async (req,res) => {
     try{
 
-        const {subSectionId} = req.body;
+        const {subSectionId, sectionId} = req.body;
         const subSectionDetails = await SubSection.findById(subSectionId);
         if(!subSectionDetails){
             return returnResponse(res,404,false,"Subsection not found");
@@ -63,7 +63,13 @@ export const deleteSubSection = async (req,res) => {
         const deletedVideo = deleteVideo(subSectionDetails.publicId);
         const deletedSubSection = await SubSection.findByIdAndDelete(subSectionId);
 
-        return returnResponse(res,200,true,"SubSection deleted successfully");
+        const updateSection = await Section.findByIdAndUpdate({_id: sectionId},{
+            $pull: {
+                subSection: subSectionId
+            }
+        }, {new: true});
+
+        return returnResponse(res,200,true,"SubSection deleted successfully", updateSection);
 
 
     }catch(error){
@@ -75,14 +81,12 @@ export const deleteSubSection = async (req,res) => {
 export const updateSubSection = async (req,res) => {
     try{
 
-        const {sectionId,title,timeDuration} = req.body;  
-        const videoFile = req.files.videoFile;
-        if(!sectionId && !title && !timeDuration && !videoUrl && !videoFile){
+        const {subSectionId,title, description} = req.body;  
+        const videoFile = req?.files?.videoFile;
+        if(!subSectionId && !title && !videoFile && !description){
             return returnResponse(res,200,true,"Nothing to update. Update successfull");
         }
-        //console.log('title: ', title);
-        const subSectionDetails = await SubSection.findById(sectionId);
-        //console.log('subSection: ', subSectionDetails);
+        const subSectionDetails = await SubSection.findById(subSectionId);
         if(videoFile){
             const deletedVideo = await  deleteVideo(subSectionDetails.publicId);
             const uploaDetails = await uploadImage(videoFile,process.env.COURSES_VIDEOS_FOLDER);
@@ -92,13 +96,14 @@ export const updateSubSection = async (req,res) => {
         if(title){
             subSectionDetails.title = title;
         }
-        if(timeDuration){
-            subSectionDetails.timeDuration = timeDuration;
+        if(description){
+            subSectionDetails.description = description;
         }
         
         await subSectionDetails.save(); 
+        console.log('updated lecture', subSectionDetails);
 
-        return returnResponse(res,200,true,"Updated sub section successfully");
+        return returnResponse(res,200,true,"Updated sub section successfully", subSectionDetails);
         
     }catch(error){
         console.log(error);
