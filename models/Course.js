@@ -54,7 +54,7 @@ const CourseSchema = new mongoose.Schema({
 	},
 	status: {
 		type: String,
-		enum: ["Draft", "Published"],
+		enum: ["Draft", "Public", "Private"],
 	},
 });
 

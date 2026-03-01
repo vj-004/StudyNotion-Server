@@ -26,6 +26,8 @@ export const sendOtp = async (req,res) => {
             specialChars: false,
         });
 
+        console.log('otp: ', otp);
+
 
         //check unique otp
         //bad way to check of unique otp
@@ -90,6 +92,8 @@ export const signUp = async (req,res) => {
         }
 
         const recentOtp = await OTP.findOne({email}).sort({createdAt:-1}).limit(1);
+
+        console.log('sent otp: ', recentOtp);
 
         if(recentOtp.otp.length == 0){
             return returnResponse(res,404,false,"OTP not found");

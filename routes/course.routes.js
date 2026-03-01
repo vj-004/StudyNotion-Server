@@ -1,6 +1,6 @@
 import { Router } from "express";
 import auth, { isAdmin, isInstructor, isStudent } from "../middlewares/auth.js";
-import { createCourse, editCourse, getCourseDetails, getDraftCourse, showAllCourses } from "../controllers/course.controller.js";
+import { createCourse, deleteCourse, editCourse, getCourseByCategory, getCourseDetails, getDraftCourse, getInstructorCourses, showAllCourses } from "../controllers/course.controller.js";
 import { createSection, deleteSection, updateSection } from "../controllers/section.controller.js";
 import { createSubSection, deleteSubSection, updateSubSection } from "../controllers/subSection.controller.js";
 import { categoryPageDetails, createCategory, showAllCategories } from "../controllers/category.controller.js";
@@ -35,6 +35,12 @@ CourseRoutes.post("/getCourseDetails", getCourseDetails);
 CourseRoutes.get('/getDraftCourse', auth, isInstructor, getDraftCourse);
 //Edit the course with new formData
 CourseRoutes.post('/edit-course',auth, isInstructor, editCourse);
+//Get all instructor courses
+CourseRoutes.get('/getInstructorCourses',auth, isInstructor, getInstructorCourses);
+//Delete a course by an Instructor
+CourseRoutes.delete('/deleteCourse', auth, isInstructor, deleteCourse);
+// get full course details
+CourseRoutes.post('/getFullCourseDetails', auth, getCourseDetails);
 
 // ********************************************************************************************************
 //                                      Category routes (Only by Admin)
@@ -44,6 +50,7 @@ CourseRoutes.post('/edit-course',auth, isInstructor, editCourse);
 CourseRoutes.post("/createCategory", auth, isAdmin, createCategory);
 CourseRoutes.get("/showAllCategories", showAllCategories);
 CourseRoutes.post("/getCategoryPageDetails", categoryPageDetails);
+CourseRoutes.post("/category-courses", auth, getCourseByCategory);
 
 // ********************************************************************************************************
 //                                      Rating and Review

@@ -21,7 +21,7 @@ export const createSection = async (req,res) => {
             return returnResponse(res,404,false,"Course not found");
         }
 
-        console.log(updatedCourse);
+        // console.log(updatedCourse);
         return returnResponse(res,200,true,"Section created and Course updated successfully", newSection);
 
     }catch(error){
