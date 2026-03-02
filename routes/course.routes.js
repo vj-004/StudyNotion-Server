@@ -1,6 +1,6 @@
 import { Router } from "express";
 import auth, { isAdmin, isInstructor, isStudent } from "../middlewares/auth.js";
-import { createCourse, deleteCourse, editCourse, getCourseByCategory, getCourseDetails, getDraftCourse, getInstructorCourses, showAllCourses } from "../controllers/course.controller.js";
+import { createCourse, createYoutubeCourse, deleteCourse, editCourse, getAllYtCourses, getCourseByCategory, getCourseDetails, getDraftCourse, getInstructorCourses, showAllCourses } from "../controllers/course.controller.js";
 import { createSection, deleteSection, updateSection } from "../controllers/section.controller.js";
 import { createSubSection, deleteSubSection, updateSubSection } from "../controllers/subSection.controller.js";
 import { categoryPageDetails, createCategory, showAllCategories } from "../controllers/category.controller.js";
@@ -41,7 +41,10 @@ CourseRoutes.get('/getInstructorCourses',auth, isInstructor, getInstructorCourse
 CourseRoutes.delete('/deleteCourse', auth, isInstructor, deleteCourse);
 // get full course details
 CourseRoutes.post('/getFullCourseDetails', auth, getCourseDetails);
-
+// create a new youtube playlist course
+CourseRoutes.post('/createYtCourse', auth, isStudent, createYoutubeCourse);
+// get all the youtube playlist courses
+CourseRoutes.get('/getAllYtCourses', auth, isStudent, getAllYtCourses);
 // ********************************************************************************************************
 //                                      Category routes (Only by Admin)
 // ********************************************************************************************************

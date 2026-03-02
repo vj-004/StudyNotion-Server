@@ -19,7 +19,7 @@ export const resetPasswordToken =  async (req,res) => {
         );
         //console.log('token: ', token);
         const url = `http://localhost:3000/update-password/${token}`; // assuming frontend is hosted on port 3000.
-        const mailResponse = await  mailSender(email,"StudyNotion - Password Reset",`Use this link to reset your password. Reset link: ${url}`);
+        const mailResponse = await  mailSender(email,"CourseX - Password Reset",`Use this link to reset your password. Reset link: ${url}`);
         return returnResponse(res,200,true,"Email sent successfully, Please check email and change password. Window to change password is 5 minutes");
     
     } catch(error){

@@ -61,6 +61,24 @@ const UserSchema = new mongoose.Schema(
         resetPasswordExpires:{
             type:Date
         },
+        ytCourses:[
+            {
+                playlist: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Playlist",
+                },
+                title: {
+                    type: String,
+                    default: "",
+                    required: true
+                },
+                url_id: {
+                    type: String,
+                    required: true,
+                    default: ""
+                }
+            },
+        ]
     }
 );
 

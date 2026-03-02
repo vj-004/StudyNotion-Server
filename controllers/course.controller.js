@@ -7,6 +7,7 @@ import { uploadImage } from "../utils/cloudinaryUtils.js";
 import { returnResponse } from "../utils/specialUtils.js";
 import SubSection from "../models/SubSection.js";
 import Section from "../models/Section.js";
+import Playlist from "../models/Playlist.js";
 
 export const createCourse = async (req,res) => {
     try{
@@ -310,4 +311,161 @@ export const getCourseByCategory = async (req,res) => {
         console.log('Error in getting courses by category');
         return returnResponse(res,500,false,"Error in fetching courses by category", error);
     }
+}
+
+const getAllVideoIds = async (playlist_id) => {
+
+    let videoids = [];
+    let pageToken = "";
+    let maxRes = 25;
+
+    do{
+        const response = await fetch(
+            `https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=${maxRes}&pageToken=${pageToken}&playlistId=${playlist_id}&key=${process.env.GOOGLE_API}`,
+            {
+                method: "GET",
+                headers: {
+                "Accept": "application/json",
+                // If you have an OAuth token, you can also add:
+                // "Authorization": `Bearer ${accessToken}`
+                },
+            }
+        );
+        
+    
+        const data = await response.json();
+        for(const item of data.items){
+            const id = item.contentDetails.videoId;
+            videoids.push(id);
+        }
+        pageToken = data.nextPageToken;
+    }while(pageToken);
+    
+    return videoids;
+}
+
+export const createYoutubeCourse = async (req, res) => {
+
+
+    const {playlistURL, playlistName} = req.body;
+    const userId = req.user.id;
+
+    if(!playlistURL || !playlistName || !userId){
+        return returnResponse(res,404,false,"Please provide all the details");
+    }
+
+    try{
+
+        const user = await User.findById(userId);
+    
+        if(!user){
+            console.log('User not found');
+            return res.status(404).json({
+                "success": false,
+                "message": "user not found"
+            })
+        }
+
+        const exists = user.ytCourses.some(course => course.url_id === playlistURL);
+        if(exists){
+            return returnResponse(res,200, true, "Course is already present with the user");
+        }
+
+        let video_ids;
+        const pL = await Playlist.findOne({
+            "playlist_id": playlistURL
+        });
+
+        if(pL){
+            video_ids = pL.video_ids;
+            await User.updateOne(
+                { _id: userId }, 
+                { $push: {
+                    ytCourses: {
+                        playlist: pL._id,
+                        title: playlistName,
+                        url_id: playlistURL
+                    }
+                }}
+            );
+
+            return res.status(200).json({
+                "success": true,
+                "data": pL,
+                "message": "Playlist created and successfully added to user, playlist existed before"
+            });
+
+        }
+        
+        video_ids = await getAllVideoIds(playlistURL);
+        const playlist = await Playlist.create({
+            playlist_id: playlistURL,
+            video_ids: video_ids
+        });
+
+        
+
+        await User.updateOne(
+            { _id: userId }, 
+            { $push: {
+                ytCourses: {
+                    playlist: playlist._id,
+                    title: playlistName,
+                    url_id: playlistURL
+                }
+            }}
+        );
+
+        return res.status(200).json({
+            "success": true,
+            "data": playlist,
+            "message": "Playlist created and successfully added to user"
+        });
+
+        
+        
+        
+
+    }
+    catch(error){
+
+        console.log('Error in adding playlist');
+        console.log(error);
+        return res.status(500).json({
+            "success": false,
+            "message": "Server error in adding playlist"
+        });
+    
+    }
+}
+
+export const getAllYtCourses = async (req,res) => {
+
+    const userId = req.user.id;
+    if(!userId){
+        return returnResponse(res,404, false, "User not found");
+    }
+
+    try{    
+
+        const user = await User.findById(userId).populate("ytCourses.playlist");
+        if(!user){
+            console.log('User not found');
+            return res.status(404).json({
+                "success": false,
+                "message": "user not found"
+            })
+        }
+
+        const ytCourses = user.ytCourses;
+        
+        return returnResponse(res, 200, true, "All playlist were retreived", ytCourses);
+
+
+    }catch(error){
+        console.log('Error in getting youtube playlist', error);
+    }
+
+
+
 }

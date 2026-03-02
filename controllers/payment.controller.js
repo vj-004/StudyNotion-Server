@@ -137,6 +137,30 @@ const enrollStudent = async (courses, userId, res) => {
 
 }
 
+export const sendPaymentSuccessEmail = async (req,res) => {
+
+    const {orderId, paymentId, amount} = req.body;
+
+    const userId = req.user.id;
+
+    if(!orderId || !paymentId || !amount || !userId){
+        return returnResponse(res,400,false,"Plase provide all the details");
+    }
+
+    try{
+
+        const enrolledStudent = await findById(userId);
+        if(!enrolledStudent){
+            return returnResponse(res,400,false,"Student not found");
+        }
+        await mailSender(enrollStudent.email, `Payment Received`)
+
+    }catch(error){
+
+    }
+
+}
+
 
 //capture the payment and initiate the razorpay order
 // export const capturePayment = async (req,res) => {

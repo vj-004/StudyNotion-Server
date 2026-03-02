@@ -11,8 +11,8 @@ export const contactUs = async (req,res) => {
             return returnResponse(res,400,false,"Please enter all fields provided");
         }
 
-        const studentMailResponse = await mailSender(email,"StudyNotion is at your service",
-            "Thank you for contacting us at StudyNotion, you message has been recieved and will be dealt with as soon as possible");
+        const studentMailResponse = await mailSender(email,"CourseX is at your service",
+            "Thank you for contacting us at CourseX, you message has been recieved and will be dealt with as soon as possible");
 
         console.log(studentMailResponse);
 

@@ -93,7 +93,7 @@ export const signUp = async (req,res) => {
 
         const recentOtp = await OTP.findOne({email}).sort({createdAt:-1}).limit(1);
 
-        console.log('sent otp: ', recentOtp);
+        // console.log('sent otp: ', recentOtp);
 
         if(recentOtp.otp.length == 0){
             return returnResponse(res,404,false,"OTP not found");
@@ -206,7 +206,7 @@ export const changePassword = async (req,res) => {
 
         //console.log("User after changing password",user);
 
-        const mailResponse = mailSender(email,'StudyNotion',"Password Changed Successfully");
+        const mailResponse = mailSender(email,'CourseX',"Password Changed Successfully");
 
         return returnResponse(res,200,true,"Passowrd Changed Successfully");
 
