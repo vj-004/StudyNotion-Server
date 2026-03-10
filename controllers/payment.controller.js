@@ -5,7 +5,8 @@ import User from "../models/User.js";
 import { mailSender } from "../utils/mailSender.js";
 import { returnResponse } from "../utils/specialUtils.js";
 import { courseEnrollmentEmail } from "../mail/templates/courseEnrollmentEmail.js";
-
+import { paymentSuccessEmail } from "../mail/templates/paymentSuccessEmail.js";
+import crypto from "crypto";
 
 export const capturePayment = async (req,res) => {
 
@@ -26,7 +27,7 @@ export const capturePayment = async (req,res) => {
             }
 
             const uid = new mongoose.Types.ObjectId(userId);
-            if(!course.studentsEnrolled.includes(uid)){
+            if(course.studentsEnrolled.includes(uid)){
                 return returnResponse(res,200,false,"Student already enrolled in a course");
             }
 
@@ -49,7 +50,8 @@ export const capturePayment = async (req,res) => {
         const paymentResponse = await instance.orders.create(options);
         res.json({
             success: true,
-            message: paymentResponse
+            message: "Payment Capture Successful",
+            data: paymentResponse
         });
 
     }catch(error){
@@ -70,9 +72,9 @@ export const verifyPayment = async (req,res) => {
     const userId =  req.user.id;
 
     if(!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !courses || !userId){
-        return returnResponse(res,200,false,"Payment failed");
+        return returnResponse(res,400,false,"Payment failed");
     }
-
+    // console.log('req.body in verify payment is working fine: ', req.body);
     let body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto.createHmac("sha256", process.env.RAZORPAY_SECRET)
     .update(body.toString())
@@ -89,7 +91,7 @@ export const verifyPayment = async (req,res) => {
         return returnResponse(res,200,true,"Payment Verified");
     }
 
-    return returnResponse(res,200,false,"Payment failed");
+    return returnResponse(res,400,false,"Payment failed");
 
 }
 
@@ -98,7 +100,6 @@ const enrollStudent = async (courses, userId, res) => {
     if(!courses || !userId){
         return returnResponse(res,400,false,"Please provide data for courses and userId");
     }
-
     for(let courseId of courses){
         try{
 
@@ -122,9 +123,9 @@ const enrollStudent = async (courses, userId, res) => {
 
             // send mail about enrolled courses to student
 
-            const emailResponse = await mailSender(enrollStudent.email,
+            const emailResponse = await mailSender(enrolledStudent.email,
                 `Successfully enrolled into ${enrolledCourse.courseName}`, 
-                courseEnrollmentEmail(enrolledCourse.courseName, enrollStudent.firstName
+                courseEnrollmentEmail(enrolledCourse.courseName, enrolledStudent.firstName
             ));
 
             console.log('Email sent to the student', emailResponse.response);
@@ -135,10 +136,12 @@ const enrollStudent = async (courses, userId, res) => {
         }
     }
 
+
 }
 
 export const sendPaymentSuccessEmail = async (req,res) => {
 
+    // console.log('req.body: ', req.body);
     const {orderId, paymentId, amount} = req.body;
 
     const userId = req.user.id;
@@ -149,14 +152,16 @@ export const sendPaymentSuccessEmail = async (req,res) => {
 
     try{
 
-        const enrolledStudent = await findById(userId);
+        const enrolledStudent = await User.findById(userId);
         if(!enrolledStudent){
             return returnResponse(res,400,false,"Student not found");
         }
-        await mailSender(enrollStudent.email, `Payment Received`)
+        // console.log('enrolled student: ', enrolledStudent);
+        await mailSender(enrolledStudent.email, `Payment Received`, paymentSuccessEmail(`${enrolledStudent.firstName} ${enrolledStudent.lastName}` , amount/100, orderId, paymentId));
 
     }catch(error){
-
+        console.log('Error in sending payment verification mail ', error)
+        return returnResponse(res,500,false,"Could not send email");
     }
 
 }

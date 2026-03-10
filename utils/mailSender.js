@@ -26,7 +26,7 @@ export const mailSender = async (email,title,body) => {
         return info;
 
     }catch(error){
-        console.log('Error in sending some OTP mail to user');
+        console.log('Error in sending mail to user');
         console.log(error);
     }
 
