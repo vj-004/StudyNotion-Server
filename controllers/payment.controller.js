@@ -17,6 +17,7 @@ export const capturePayment = async (req,res) => {
         return returnResponse(res,400,false,"No courses bought");
     }
     let totalAmount = 0;
+    let boughtCourses = [];
     for(const course_id of courses){
         let course;
         try{
@@ -30,6 +31,8 @@ export const capturePayment = async (req,res) => {
             if(course.studentsEnrolled.includes(uid)){
                 return returnResponse(res,200,false,"Student already enrolled in a course");
             }
+
+            boughtCourses.push(course);
 
             totalAmount += course.price;
 
@@ -51,7 +54,8 @@ export const capturePayment = async (req,res) => {
         res.json({
             success: true,
             message: "Payment Capture Successful",
-            data: paymentResponse
+            data: paymentResponse,
+            courses: boughtCourses
         });
 
     }catch(error){
