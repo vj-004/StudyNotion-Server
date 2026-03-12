@@ -463,9 +463,39 @@ export const getAllYtCourses = async (req,res) => {
 
 
     }catch(error){
-        console.log('Error in getting youtube playlist', error);
+        console.log('Error in getting youtube playlists', error);
     }
 
-
-
 }
+
+// export const getYtCourseById = async (req,res) => {
+
+//     const userId = req.user.id;
+//     const {playlistId} = req.body;
+//     if(!userId){
+//         return returnResponse(res,404, false, "User not found");
+//     }
+
+//     if(!playlistId){
+//         return returnResponse(res,404, false, "Please enter the youtube course id");
+//     }
+
+//     try{    
+
+//         const playlist = await Playlist.findById(playlistId);
+//         if(!playlist){
+//             console.log('Playlist not found');
+//             return res.status(404).json({
+//                 "success": false,
+//                 "message": "Playlist not found"
+//             })
+//         }
+        
+//         return returnResponse(res, 200, true, "All playlist were retreived", playlist);
+
+
+//     }catch(error){
+//         console.log('Error in getting youtube playlist', error);
+//     }
+
+// }

@@ -142,7 +142,14 @@ export const login = async(req,res) => {
         if(!email || !password){
             return returnResponse(res,403,false,"All fields are required, Please try again");
         }
-        const user = await User.findOne({email}).populate("additionalDetails").exec();
+        const user = await User.findOne({ email })
+        .populate("additionalDetails")
+        .populate("courses")
+        .populate({
+            path: "ytCourses.playlist",  // populate the playlist field inside ytCourses array
+            model: "Playlist"            // make sure this matches the Mongoose model name
+        })
+        .exec();
 
         if(!user){
             return returnResponse(res,401,false,"User does not exist, Please Sign Up");
