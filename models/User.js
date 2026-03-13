@@ -46,7 +46,7 @@ const UserSchema = new mongoose.Schema(
             {
                 courseId:{
                     type: mongoose.Schema.Types.ObjectId,
-                    ref:"CourseProgress",
+                    ref:"Course",
                 },
                 progressPercentage: {
                     type: Number,
@@ -82,7 +82,25 @@ const UserSchema = new mongoose.Schema(
                     default: ""
                 }
             },
-        ]
+        ],
+        ytCourseProgress:[
+            {
+                playlistId:{
+                    type: String,
+                },
+                isCompleted: [
+                    {
+                        videoId: {
+                            type: String
+                        },
+                        status: {
+                            type: Boolean,
+                        }
+                    }
+                ]
+                    
+            }
+        ],
     }
 );
 

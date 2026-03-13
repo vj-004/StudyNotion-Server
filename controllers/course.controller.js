@@ -346,11 +346,11 @@ const getAllVideoIds = async (playlist_id) => {
 
 export const createYoutubeCourse = async (req, res) => {
 
-
-    const {playlistURL, playlistName} = req.body;
+    
+    const {playlistURL, playlistName, descp} = req.body;
     const userId = req.user.id;
 
-    if(!playlistURL || !playlistName || !userId){
+    if(!playlistURL || !playlistName || !userId || !descp){
         return returnResponse(res,404,false,"Please provide all the details");
     }
 
@@ -377,21 +377,50 @@ export const createYoutubeCourse = async (req, res) => {
         });
 
         if(pL){
+
+
             video_ids = pL.video_ids;
+
+            let isCompletedList = [];
+            for(const videoId of video_ids){
+                isCompletedList.push({
+                    videoId: videoId,
+                    status: false
+                });
+            }
+            // console.log('isCompleted List',isCompletedList);
             await User.updateOne(
                 { _id: userId }, 
                 { $push: {
                     ytCourses: {
                         playlist: pL._id,
                         title: playlistName,
-                        url_id: playlistURL
+                        url_id: playlistURL,
+                        description: descp
+                    },
+                    ytCourseProgress: {
+                        playlistId: pL._id,
+                        isCompleted: isCompletedList
                     }
                 }}
             );
 
+            const returnData = {
+                ytCourses: {
+                    playlist: pL._id,
+                    title: playlistName,
+                    url_id: playlistURL,
+                    description: descp
+                },
+                ytCourseProgress: {
+                    playlistId: pL._id,
+                    isCompleted: isCompletedList
+                }
+            }
+
             return res.status(200).json({
                 "success": true,
-                "data": pL,
+                "data": returnData,
                 "message": "Playlist created and successfully added to user, playlist existed before"
             });
 
@@ -403,22 +432,47 @@ export const createYoutubeCourse = async (req, res) => {
             video_ids: video_ids
         });
 
-        
+        let isCompletedList = [];
+        for(const videoId of video_ids){
+            isCompletedList.push({
+                videoId: videoId,
+                isComplted: false
+            });
+        }
 
+        
         await User.updateOne(
             { _id: userId }, 
             { $push: {
                 ytCourses: {
                     playlist: playlist._id,
                     title: playlistName,
-                    url_id: playlistURL
+                    url_id: playlistURL,
+                    description: descp
+                },
+                ytCourseProgress: {
+                    playlistId: playlist._id,
+                    isComplted: isCompletedList
                 }
             }}
         );
 
+        const returnData = {
+            ytCourses: {
+                playlist: playlist._id,
+                title: playlistName,
+                url_id: playlistURL,
+                description: descp
+            },
+            ytCourseProgress: {
+                playlistId: playlist._id,
+                isComplted: isCompletedList
+            }
+        }
+
         return res.status(200).json({
             "success": true,
-            "data": playlist,
+            "data": returnData,
             "message": "Playlist created and successfully added to user"
         });
 
