@@ -90,12 +90,7 @@ const UserSchema = new mongoose.Schema(
                 },
                 isCompleted: [
                     {
-                        videoId: {
-                            type: String
-                        },
-                        status: {
-                            type: Boolean,
-                        }
+                        type: String
                     }
                 ]
                     

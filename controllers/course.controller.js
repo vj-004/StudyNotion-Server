@@ -379,15 +379,8 @@ export const createYoutubeCourse = async (req, res) => {
         if(pL){
 
 
-            video_ids = pL.video_ids;
 
             let isCompletedList = [];
-            for(const videoId of video_ids){
-                isCompletedList.push({
-                    videoId: videoId,
-                    status: false
-                });
-            }
             // console.log('isCompleted List',isCompletedList);
             await User.updateOne(
                 { _id: userId }, 
@@ -399,7 +392,7 @@ export const createYoutubeCourse = async (req, res) => {
                         description: descp
                     },
                     ytCourseProgress: {
-                        playlistId: pL._id,
+                        playlistUrl: playlistURL,
                         isCompleted: isCompletedList
                     }
                 }}
@@ -407,13 +400,13 @@ export const createYoutubeCourse = async (req, res) => {
 
             const returnData = {
                 ytCourses: {
-                    playlist: pL._id,
+                    playlist: pL,
                     title: playlistName,
                     url_id: playlistURL,
                     description: descp
                 },
                 ytCourseProgress: {
-                    playlistId: pL._id,
+                    playlistUrl: playlistURL,
                     isCompleted: isCompletedList
                 }
             }
@@ -433,12 +426,6 @@ export const createYoutubeCourse = async (req, res) => {
         });
 
         let isCompletedList = [];
-        for(const videoId of video_ids){
-            isCompletedList.push({
-                videoId: videoId,
-                isComplted: false
-            });
-        }
 
         
         await User.updateOne(
@@ -451,7 +438,7 @@ export const createYoutubeCourse = async (req, res) => {
                     description: descp
                 },
                 ytCourseProgress: {
-                    playlistId: playlist._id,
+                    playlistUrl: playlistURL,
                     isComplted: isCompletedList
                 }
             }}
@@ -459,13 +446,13 @@ export const createYoutubeCourse = async (req, res) => {
 
         const returnData = {
             ytCourses: {
-                playlist: playlist._id,
+                playlist: playlist,
                 title: playlistName,
                 url_id: playlistURL,
                 description: descp
             },
             ytCourseProgress: {
-                playlistId: playlist._id,
+                playlistUrl: playlistURL,
                 isComplted: isCompletedList
             }
         }
