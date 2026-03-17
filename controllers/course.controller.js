@@ -368,7 +368,7 @@ export const createYoutubeCourse = async (req, res) => {
 
         const exists = user.ytCourses.some(course => course.url_id === playlistURL);
         if(exists){
-            return returnResponse(res,200, true, "Course is already present with the user");
+            return returnResponse(res,200, false, "Course is already present with the user");
         }
 
         let video_ids;
@@ -478,6 +478,63 @@ export const createYoutubeCourse = async (req, res) => {
         });
     
     }
+}
+
+export const markComplete = async (req, res) => {
+
+    const userId = req.user.id;
+    const {playlistUrl, videoId} = req.body;
+    console.log('req.body', req.body);
+
+    if(!userId || !playlistUrl || !videoId){
+        return returnResponse(res,404,false,"Please provide all the details");
+    }
+
+    try{
+
+         const user = await User.findById(userId);
+    
+        if(!user){
+            console.log('User not found');
+            return res.status(404).json({
+                "success": false,
+                "message": "user not found"
+            })
+        }
+
+        const exists = user.ytCourseProgress.some(courseProgress => courseProgress.playlistUrl === playlistUrl);
+        if(!exists){
+            return returnResponse(res,404, false, "This course was not found");
+        }
+
+        const updatedUser = await User.findOneAndUpdate(
+            {
+                _id: userId,
+                "ytCourseProgress.playlistUrl": playlistUrl
+            },
+            {
+                $addToSet: {
+                "ytCourseProgress.$.isCompleted": videoId
+                }
+            },
+            { new: true }
+        );
+
+        const updatedCourseProgress = updatedUser.ytCourseProgress.find((courseProgress) => courseProgress.playlistUrl === playlistUrl);
+
+        return returnResponse(res,200,true,"Video Marked Completed Successfully", updatedCourseProgress);
+
+
+
+
+    }catch(error){
+        console.log('error in marking a lecture as complete', error);
+        return res.status(500).json({
+            "success": false,
+            "message": "Server error in marking a lecture as complete"
+        });
+    }
+
 }
 
 export const getAllYtCourses = async (req,res) => {

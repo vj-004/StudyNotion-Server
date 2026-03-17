@@ -85,7 +85,7 @@ const UserSchema = new mongoose.Schema(
         ],
         ytCourseProgress:[
             {
-                playlistId:{
+                playlistUrl:{
                     type: String,
                 },
                 isCompleted: [
