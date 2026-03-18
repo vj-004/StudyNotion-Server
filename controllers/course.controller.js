@@ -8,12 +8,16 @@ import { returnResponse } from "../utils/specialUtils.js";
 import SubSection from "../models/SubSection.js";
 import Section from "../models/Section.js";
 import Playlist from "../models/Playlist.js";
+import CourseProgress from "../models/CourseProgress.js";
 
 export const createCourse = async (req,res) => {
+
     try{
         //console.log('req.body', req.body);
         const {courseName,courseDescription,whatYouWillLearn,price,category,status,tag,instructions} = req.body;
         const thumbnail = req.files.thumbnail;
+
+        // console.log('req.body', req.body);
         //console.log('req.files',req.files);
         //validation
         if(!courseName || !courseDescription || !whatYouWillLearn || !price || !category || 
@@ -35,18 +39,20 @@ export const createCourse = async (req,res) => {
         const thumbnailImage = await uploadImage(thumbnail, process.env.THUMBNAIL_FOLDER);
         
         //create an entry for new course
-        const newCourse = await Course.create({
+        let newCourse = await Course.create({
             courseName,
             courseDescription,
-            instructor:userId,
+            instructor: userId,
             whatYouWillLearn,
             price,
             category: categoryDetails._id,
             thumbnail:thumbnailImage.secure_url,
-            tag,
+            tag: JSON.parse(tag),
             status,
-            instructions
+            instructions: JSON.parse(instructions)
         });
+
+        newCourse["category"] = category;
 
         //add the new course to user schema of instructor
         await User.findByIdAndUpdate(
@@ -120,6 +126,12 @@ export const getCourseDetails = async (req,res) => {
         .populate("category")
         //.populate("ratingsAndReviews")
         .exec();
+
+        let courseProgressCount = await CourseProgress.findOne({
+            courseId: courseId,
+        });
+
+        
 
         if(!courseDetails){
             return returnResponse(res,404,false,"Course not found");
