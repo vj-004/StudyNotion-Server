@@ -137,7 +137,7 @@ export const getCourseDetails = async (req,res) => {
             return returnResponse(res,404,false,"Course not found");
         }
 
-        return returnResponse(res,200,true,"Course details fetched successfully", courseDetails);
+        return returnResponse(res,200,true,"Course details fetched successfully", {courseDetails});
 
     }catch(error){
         console.log(error);

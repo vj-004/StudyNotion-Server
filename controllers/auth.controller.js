@@ -144,7 +144,17 @@ export const login = async(req,res) => {
         }
         const user = await User.findOne({ email })
         .populate("additionalDetails")
-        .populate("courses")
+        .populate({
+            path: "courses",
+            populate: {
+                path: "courseContent",
+                model: "Section",
+                populate: {
+                    path: "subSection", // or "subSections" (check exact field name)
+                    model: "SubSection"
+                }
+            }
+        })
         .populate({
             path: "ytCourses.playlist",  // populate the playlist field inside ytCourses array
             model: "Playlist"            // make sure this matches the Mongoose model name
@@ -186,6 +196,7 @@ export const login = async(req,res) => {
 
 
     }catch(error){
+        console.log('error: ', error);
         return returnResponse(res,500,false,"Error logging in, Please try again");
     }
 }

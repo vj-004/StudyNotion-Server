@@ -152,3 +152,35 @@ export const getEnrolledCourses = async (req, res) => {
     }
 };
 
+export const instructorDashboardDetails = async (req,res) => {
+
+  try{
+
+    const courseDetails = await Course.find({instructor: req.user.id});
+
+    const courseData=  courseDetails.map((course) => {
+      const totalStudentsEnrolled = course.studentsEnrolled.length;
+      const totalAmountEarned = totalStudentsEnrolled * course.price;
+
+      const courseDataWithStats = {
+        _id: course._id,
+        courseName: course.courseName,
+        courseDescription: course.courseDescription,
+        totalStudentsEnrolled: totalStudentsEnrolled,
+        totalAmountEarned: totalAmountEarned,
+        status: course.status
+      };
+
+      return courseDataWithStats;
+    });
+
+    return returnResponse(res,200,true,"Instructor Dashboard details returned successfully", courseData);
+
+  }
+  catch(error){
+    console.log('Error: ', error);
+    return returnResponse(res,500,false,"Internal Server Error");
+  }
+
+};
+

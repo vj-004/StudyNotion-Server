@@ -40,7 +40,7 @@ CourseRoutes.get('/getInstructorCourses',auth, isInstructor, getInstructorCourse
 //Delete a course by an Instructor
 CourseRoutes.delete('/deleteCourse', auth, isInstructor, deleteCourse);
 // get full course details
-CourseRoutes.post('/getFullCourseDetails', auth, getCourseDetails);
+CourseRoutes.post('/getFullCourseDetails', getCourseDetails);
 // create a new youtube playlist course
 CourseRoutes.post('/createYtCourse', auth, isStudent, createYoutubeCourse);
 // get all the youtube playlist courses
