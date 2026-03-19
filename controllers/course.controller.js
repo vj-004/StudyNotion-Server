@@ -451,7 +451,7 @@ export const createYoutubeCourse = async (req, res) => {
                 },
                 ytCourseProgress: {
                     playlistUrl: playlistURL,
-                    isComplted: isCompletedList
+                    isCompleted: isCompletedList
                 }
             }}
         );
@@ -465,7 +465,7 @@ export const createYoutubeCourse = async (req, res) => {
             },
             ytCourseProgress: {
                 playlistUrl: playlistURL,
-                isComplted: isCompletedList
+                isCompleted: isCompletedList
             }
         }
 
