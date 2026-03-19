@@ -56,7 +56,7 @@ CourseRoutes.post('/markYtCourse', auth, isStudent, markComplete);
 CourseRoutes.post("/createCategory", auth, isAdmin, createCategory);
 CourseRoutes.get("/showAllCategories", showAllCategories);
 CourseRoutes.post("/getCategoryPageDetails", categoryPageDetails);
-CourseRoutes.post("/category-courses", auth, getCourseByCategory);
+CourseRoutes.post("/category-courses", getCourseByCategory);
 
 // ********************************************************************************************************
 //                                      Rating and Review
