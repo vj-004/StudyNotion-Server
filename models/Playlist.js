@@ -7,13 +7,36 @@ const PlaylistSchema = new mongoose.Schema(
             type: String,
             required: true
         },
-        video_ids: {
-            type: [String],
-            default: [],
-        },
-        // thumbnail: {
-
-        // }
+        section:[
+            {
+                title: {
+                    type: String,
+                    default: ""
+                },
+                videoIds:[
+                    {
+                        type: String,
+                        default: []
+                    }
+                ]
+            }
+        ],
+        videosDetails:[
+            {
+                videoId:{
+                    type: String,
+                    default: ""
+                },
+                title: {
+                    type: String,
+                    default: ""
+                },
+                description: {
+                    type: String,
+                    default: ""
+                }
+            }
+        ]
     }
 );
 

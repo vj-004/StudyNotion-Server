@@ -9,6 +9,7 @@ import SubSection from "../models/SubSection.js";
 import Section from "../models/Section.js";
 import Playlist from "../models/Playlist.js";
 import CourseProgress from "../models/CourseProgress.js";
+import { GoogleGenAI } from "@google/genai";
 
 export const createCourse = async (req,res) => {
 
@@ -325,35 +326,49 @@ export const getCourseByCategory = async (req,res) => {
     }
 }
 
-const getAllVideoIds = async (playlist_id) => {
+const getAllVideosData = async (playlist_id) => {
 
     let videoids = [];
+    let snippets = [];
     let pageToken = "";
-    let maxRes = 25;
+    let maxRes = 50;
+    
 
     do{
+        const youtuberAPI = `https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=${maxRes}&pageToken=${pageToken}&playlistId=${playlist_id}&fields=nextPageToken,items(snippet(title,description,resourceId/videoId))&key=${process.env.GOOGLE_API}`;
         const response = await fetch(
-            `https://youtube.googleapis.com/youtube/v3/playlistItems?part=contentDetails&maxResults=${maxRes}&pageToken=${pageToken}&playlistId=${playlist_id}&key=${process.env.GOOGLE_API}`,
+            youtuberAPI,
             {
                 method: "GET",
                 headers: {
                 "Accept": "application/json",
-                // If you have an OAuth token, you can also add:
-                // "Authorization": `Bearer ${accessToken}`
                 },
             }
         );
+
         
-    
         const data = await response.json();
+
         for(const item of data.items){
-            const id = item.contentDetails.videoId;
+            const id = item.snippet.resourceId.videoId;
             videoids.push(id);
+            const snip = {
+                videoId: id,
+                title: item.snippet.title,
+                description: item.snippet.description
+            }
+            snippets.push(snip);
         }
+
         pageToken = data.nextPageToken;
-    }while(pageToken);
     
-    return videoids;
+    }while(pageToken);
+
+    
+    return {
+        videoids,
+        snippets
+    };
 }
 
 export const createYoutubeCourse = async (req, res) => {
@@ -431,10 +446,10 @@ export const createYoutubeCourse = async (req, res) => {
 
         }
         
-        video_ids = await getAllVideoIds(playlistURL);
+        const {videoids} = await getAllVideosData(playlistURL);
         const playlist = await Playlist.create({
             playlist_id: playlistURL,
-            video_ids: video_ids
+            video_ids: videoids
         });
 
         let isCompletedList = [];
@@ -490,6 +505,209 @@ export const createYoutubeCourse = async (req, res) => {
         });
     
     }
+}
+
+export const createYoutubeCourseV2 = async (req, res) => {
+
+    const {playlistURL, playlistName, descp} = req.body;
+    const userId = req.user.id;
+
+    if(!playlistURL || !playlistName || !userId || !descp){
+        return returnResponse(res,404,false,"Please provide all the details");
+    }
+
+    try{
+
+        const user = await User.findById(userId);
+    
+        if(!user){
+            console.log('User not found');
+            return res.status(404).json({
+                "success": false,
+                "message": "user not found"
+            })
+        }
+
+        const exists = user.ytCourses.some(course => course.url_id === playlistURL);
+        if(exists){
+            return returnResponse(res,200, false, "Course is already present with the user");
+        }
+
+         const pL = await Playlist.findOne({
+            "playlist_id": playlistURL
+        });
+
+        if(pL){
+
+            let isCompletedList = [];
+            await User.updateOne(
+                { _id: userId }, 
+                { $push: {
+                    ytCourses: {
+                        playlist: pL._id,
+                        title: playlistName,
+                        url_id: playlistURL,
+                        description: descp
+                    },
+                    ytCourseProgress: {
+                        playlistUrl: playlistURL,
+                        isCompleted: isCompletedList
+                    }
+                }}
+            );
+
+            const returnData = {
+                ytCourses: {
+                    playlist: pL,
+                    title: playlistName,
+                    url_id: playlistURL,
+                    description: descp
+                },
+                ytCourseProgress: {
+                    playlistUrl: playlistURL,
+                    isCompleted: isCompletedList
+                }
+            }
+
+            return res.status(200).json({
+                "success": true,
+                "data": returnData,
+                "message": "Playlist created and successfully added to user, playlist existed before"
+            });
+
+        }
+
+        
+        
+        const {snippets} = await getAllVideosData(playlistURL);
+
+        // console.log('snippets: ', snippets);
+
+        const prompt = `You are an AI system that converts a list of YouTube videos into a structured course.
+
+                        Each item in the input is an object with:
+                        - title
+                        - description
+                        - videoId (this is the videoId)
+
+                        Your task is to group videos into logical sections (like a course curriculum).
+
+                        Instructions:
+                        1. Use the video title as the primary signal to understand the topic.
+                        2. Use the description ONLY if it contains meaningful information about the video content.
+                        - Ignore descriptions that contain only links, promotions, or irrelevant text.
+                        3. Group videos into sections based on similarity of topics.
+                        4. Maintain the original playlist order while grouping.
+
+                        Section Rules:
+                        - Each section must have:
+                        - "title": a concise name describing the topic
+                        - "videoIds": an ordered list of video IDs (use resourceId.videoId)
+
+                        Important Constraints:
+                        - If the topic of videos is unclear → DO NOT group them
+                        - If videos appear unrelated → DO NOT group them
+                        - If a video is long (e.g., ~1–2 hours) → if necessary keep it as a separate section
+                        - If you are NOT confident → create one section per video
+
+                        Fallback Behavior:
+                        If meaningful grouping is NOT possible, return one section per video.
+
+                        Output Requirements (STRICT):
+                        - Return ONLY valid JSON
+                        - Output MUST be an array of objects
+                        - Each object MUST have:
+                        - "title": string
+                        - "videoIds": array of strings
+                        - Do NOT include any extra fields
+                        - Do NOT include explanations or text outside JSON
+
+                        Input:
+                        ${JSON.stringify(snippets)}`;
+
+        const ai = new GoogleGenAI({});
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                    title: { type: "string" },
+                    videoIds: {
+                        type: "array",
+                        items: { type: "string" }
+                    }
+                    },
+                    required: ["title", "videoIds"]
+                }
+                }
+            }
+        });
+
+        // console.log('response: ', response);
+
+        const result = response.text;
+        const sections = JSON.parse(result);
+
+        const playlist = await Playlist.create({
+            playlist_id: playlistURL,
+            section: sections,
+            videosDetails: snippets
+        });
+
+        // console.log('playlist: ', playlist);
+
+        let isCompletedList = [];
+
+        await User.updateOne(
+            { _id: userId }, 
+            { $push: {
+                ytCourses: {
+                    playlist: playlist._id,
+                    title: playlistName,
+                    url_id: playlistURL,
+                    description: descp
+                },
+                ytCourseProgress: {
+                    playlistUrl: playlistURL,
+                    isCompleted: isCompletedList
+                }
+            }}
+        );
+
+        const returnData = {
+            ytCourses: {
+                playlist: playlist,
+                title: playlistName,
+                url_id: playlistURL,
+                description: descp
+            },
+            ytCourseProgress: {
+                playlistUrl: playlistURL,
+                isCompleted: isCompletedList
+            }
+        }
+
+        return res.status(200).json({
+            "success": true,
+            "data": returnData,
+            "message": "Playlist created and successfully added to user"
+        });
+
+    }
+    catch(error){
+        console.log('Error in adding playlist');
+        console.log(error);
+        return res.status(500).json({
+            "success": false,
+            "message": "Server error in adding playlist"
+        });
+    }
+
 }
 
 export const markComplete = async (req, res) => {

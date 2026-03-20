@@ -1,6 +1,6 @@
 import { Router } from "express";
 import auth, { isAdmin, isInstructor, isStudent } from "../middlewares/auth.js";
-import { createCourse, createYoutubeCourse, deleteCourse, editCourse, getAllYtCourses, getCourseByCategory, getCourseDetails, getDraftCourse, getInstructorCourses, markComplete, showAllCourses } from "../controllers/course.controller.js";
+import { createCourse, createYoutubeCourse, createYoutubeCourseV2, deleteCourse, editCourse, getAllYtCourses, getCourseByCategory, getCourseDetails, getDraftCourse, getInstructorCourses, markComplete, showAllCourses } from "../controllers/course.controller.js";
 import { createSection, deleteSection, updateSection } from "../controllers/section.controller.js";
 import { createSubSection, deleteSubSection, updateSubSection } from "../controllers/subSection.controller.js";
 import { categoryPageDetails, createCategory, showAllCategories } from "../controllers/category.controller.js";
@@ -42,7 +42,8 @@ CourseRoutes.delete('/deleteCourse', auth, isInstructor, deleteCourse);
 // get full course details
 CourseRoutes.post('/getFullCourseDetails', getCourseDetails);
 // create a new youtube playlist course
-CourseRoutes.post('/createYtCourse', auth, isStudent, createYoutubeCourse);
+CourseRoutes.post('/createYtCourse', auth, isStudent, createYoutubeCourseV2);
+
 // get all the youtube playlist courses
 CourseRoutes.get('/getAllYtCourses', auth, isStudent, getAllYtCourses);
 // mark a youtube course complete
