@@ -96,6 +96,16 @@ const UserSchema = new mongoose.Schema(
                     
             }
         ],
+        playlistData:[
+            {
+                title: {
+                    type: String,
+                },
+                playlistId: {
+                    type: String,
+                }
+            }
+        ]
     }
 );
 

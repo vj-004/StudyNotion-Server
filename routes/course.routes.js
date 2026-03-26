@@ -1,6 +1,6 @@
 import { Router } from "express";
 import auth, { isAdmin, isInstructor, isStudent } from "../middlewares/auth.js";
-import { createCourse, createYoutubeCourse, createYoutubeCourseV2, deleteCourse, editCourse, getAllYtCourses, getCourseByCategory, getCourseDetails, getDraftCourse, getInstructorCourses, markComplete, showAllCourses } from "../controllers/course.controller.js";
+import { createCourse, createYoutubeCourse, createYoutubeCourseV2, deleteCourse, editCourse, getAllPlaylistData, getAllYtCourses, getCourseByCategory, getCourseDetails, getDraftCourse, getInstructorCourses, markComplete, showAllCourses } from "../controllers/course.controller.js";
 import { createSection, deleteSection, updateSection } from "../controllers/section.controller.js";
 import { createSubSection, deleteSubSection, updateSubSection } from "../controllers/subSection.controller.js";
 import { categoryPageDetails, createCategory, showAllCategories } from "../controllers/category.controller.js";
@@ -48,6 +48,8 @@ CourseRoutes.post('/createYtCourse', auth, isStudent, createYoutubeCourseV2);
 CourseRoutes.get('/getAllYtCourses', getAllYtCourses);
 // mark a youtube course complete
 CourseRoutes.post('/markYtCourse', auth, isStudent, markComplete);
+// get all playlist data so that users can pick a course
+CourseRoutes.get('/getAllPlaylistData', getAllPlaylistData);
 
 // ********************************************************************************************************
 //                                      Category routes (Only by Admin)
