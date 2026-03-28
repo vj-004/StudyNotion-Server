@@ -332,37 +332,7 @@ const getAllVideosData = async (playlist_id) => {
     let snippets = [];
     let pageToken = "";
     let maxRes = 50;
-
-    let title;
     
-    try{
-
-        const youtubePlaylistAPI = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlist_id}&fields=items(id,snippet(title))&key=${process.env.GOOGLE_API}`;
-        const response = await fetch(
-            youtubePlaylistAPI,
-            {
-                method: "GET",
-                headers: {
-                "Accept": "application/json",
-                },
-            }
-        );
-
-        const data = await response.json();
-
-        if (!data.items || data.items.length === 0) {
-            return {
-                status: false,
-                message: "Invalid Youtube URL"
-            };
-        }
-
-        title = data.snippet.title;
-
-    }
-    catch(error){
-        console.log('Error in trying to find the playlist', error);
-    }
 
     do{
         const youtuberAPI = `https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=${maxRes}&pageToken=${pageToken}&playlistId=${playlist_id}&fields=nextPageToken,items(snippet(title,description,resourceId/videoId))&key=${process.env.GOOGLE_API}`;
@@ -396,7 +366,6 @@ const getAllVideosData = async (playlist_id) => {
 
     
     return {
-        title,
         videoids,
         snippets
     };
@@ -608,25 +577,11 @@ export const createYoutubeCourseV2 = async (req, res) => {
 
         }
 
-
-
         
         
-        const {status, title, snippets} = await getAllVideosData(playlistURL);
-
-        if(status === false){
-            return returnResponse(res,404,false,"The given playlist URL is not valid");
-        }
+        const {snippets} = await getAllVideosData(playlistURL);
 
         // console.log('snippets: ', snippets);
-        const updateAdmin = await User.findOneAndUpdate({accountType: "admin"}, {
-            $push: {
-                playlistData: {
-                    title,
-                    playlistId: playlistURL
-                }
-            }
-        })
 
         const prompt = `You are an AI system that converts a list of YouTube videos into a structured course.
 
@@ -814,21 +769,11 @@ export const markComplete = async (req, res) => {
 
 export const getAllYtCourses = async (req,res) => {
 
-    const limitNumber = req.query.limit;
 
     try{    
 
-        let ytCourses;
-        if(!limitNumber){
-            ytCourses = await Playlist.find({}).limit(1);
-        }
-        else if(limitNumber != -1){
-            ytCourses = await Playlist.find({}).limit(limitNumber);
-        }
-        else{
-            ytCourses = await Playlist.find({});
-        }
-        
+
+        const ytCourses = await Playlist.find({}).limit(1);
 
         return returnResponse(res,200,true,"All youtube courses fetched successfully", ytCourses);
 
@@ -870,18 +815,3 @@ export const getAllYtCourses = async (req,res) => {
 //     }
 
 // }
-
-export const getAllPlaylistData = async (req,res) => {
-
-    try{    
-
-        const user = await User.findOne({
-            accountType: "admin"
-        });
-        return returnResponse(res,200,true,"All playlist data fetched successfully", user.playlistData);
-
-    }catch(error){
-        console.log('Error in getting youtube playlists', error);
-    }
-
-}
