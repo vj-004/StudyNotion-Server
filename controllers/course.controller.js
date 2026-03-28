@@ -609,11 +609,12 @@ export const createYoutubeCourseV2 = async (req, res) => {
 
         }
 
-        
-        
-        const {snippets} = await getAllVideosData(playlistURL);
+    
+        const {status, title, snippets} = await getAllVideosData(playlistURL);
 
-        // console.log('snippets: ', snippets);
+        if(status === false){
+            return returnResponse(res,404,false,"The given playlist URL is not valid");
+        }
 
         const prompt = `You are an AI system that converts a list of YouTube videos into a structured course.
 
