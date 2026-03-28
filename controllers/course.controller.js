@@ -332,7 +332,38 @@ const getAllVideosData = async (playlist_id) => {
     let snippets = [];
     let pageToken = "";
     let maxRes = 50;
+
+    let title;
     
+    try{
+
+        const youtubePlaylistAPI = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlist_id}&fields=items(id,snippet(title))&key=${process.env.GOOGLE_API}`;
+        const response = await fetch(
+            youtubePlaylistAPI,
+            {
+                method: "GET",
+                headers: {
+                "Accept": "application/json",
+                },
+            }
+        );
+
+        const data = await response.json();
+
+
+        if (!data.items || data.items.length === 0) {
+            return {
+                status: false,
+                message: "Invalid Youtube URL"
+            };
+        }
+
+        title = data.snippet.title;
+
+    }
+    catch(error){
+        console.log('Error in trying to find the playlist', error);
+    }
 
     do{
         const youtuberAPI = `https://youtube.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=${maxRes}&pageToken=${pageToken}&playlistId=${playlist_id}&fields=nextPageToken,items(snippet(title,description,resourceId/videoId))&key=${process.env.GOOGLE_API}`;
@@ -366,6 +397,7 @@ const getAllVideosData = async (playlist_id) => {
 
     
     return {
+        title,
         videoids,
         snippets
     };
