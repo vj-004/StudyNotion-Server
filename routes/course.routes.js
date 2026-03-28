@@ -45,7 +45,7 @@ CourseRoutes.post('/getFullCourseDetails', getCourseDetails);
 CourseRoutes.post('/createYtCourse', auth, isStudent, createYoutubeCourseV2);
 
 // get all the youtube playlist courses
-CourseRoutes.get('/getAllYtCourses', auth, isStudent, getAllYtCourses);
+CourseRoutes.get('/getAllYtCourses', getAllYtCourses);
 // mark a youtube course complete
 CourseRoutes.post('/markYtCourse', auth, isStudent, markComplete);
 
