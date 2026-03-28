@@ -714,7 +714,7 @@ export const markComplete = async (req, res) => {
 
     const userId = req.user.id;
     const {playlistUrl, videoId} = req.body;
-    // console.log('req.body', req.body);
+    console.log('req.body', req.body);
 
     if(!userId || !playlistUrl || !videoId){
         return returnResponse(res,404,false,"Please provide all the details");
@@ -769,13 +769,25 @@ export const markComplete = async (req, res) => {
 
 export const getAllYtCourses = async (req,res) => {
 
+    const userId = req.user.id;
+    if(!userId){
+        return returnResponse(res,404, false, "User not found");
+    }
 
     try{    
 
+        const user = await User.findById(userId).populate("ytCourses.playlist");
+        if(!user){
+            console.log('User not found');
+            return res.status(404).json({
+                "success": false,
+                "message": "user not found"
+            })
+        }
 
-        const ytCourses = await Playlist.find({}).limit(1);
-
-        return returnResponse(res,200,true,"All youtube courses fetched successfully", ytCourses);
+        const ytCourses = user.ytCourses;
+        
+        return returnResponse(res, 200, true, "All playlist were retreived", ytCourses);
 
 
     }catch(error){
