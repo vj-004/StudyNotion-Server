@@ -89,7 +89,20 @@ const UserSchema = new mongoose.Schema(
                 statusMessage: {
                     type: String,
                     default: ""
-                }
+                },
+                playlistDetails: {
+                    thumbnail: {
+                        url: {
+                            type: String,
+                        },
+                        width: {
+                            type: Number,
+                        },
+                        height: {
+                            type: Number,
+                        },
+                    },
+                },
             },
         ],
         ytCourseProgress:[
@@ -102,8 +115,11 @@ const UserSchema = new mongoose.Schema(
                         type: String,
                         default: []
                     }
-                ]
-                    
+                ],
+                totalLectures: {
+                    type: Number,
+                    default: 0
+                }
             }
         ],
     }

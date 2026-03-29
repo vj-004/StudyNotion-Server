@@ -793,7 +793,8 @@ export const createYoutubeCourseV3 = async (req, res) => {
                     },
                     ytCourseProgress: {
                         playlistUrl: playlistURL,
-                        isCompleted: isCompletedList
+                        isCompleted: isCompletedList,
+                        totalLectures: pL.videosDetails.length,
                     }
                 }}
             );
@@ -836,11 +837,13 @@ export const createYoutubeCourseV3 = async (req, res) => {
                     url_id: playlistURL,
                     description: descp,
                     status: playlistStatus.PROCESSING,
-                    statusMessage: "We are currently processing your course"
+                    statusMessage: "We are currently processing your course",
+                    playlistDetals: {}
                 },
                 ytCourseProgress: {
                     playlistUrl: playlistURL,
-                    isCompleted: []
+                    isCompleted: [],
+                    totalLectures: 0,
                 }
             }}
         );
