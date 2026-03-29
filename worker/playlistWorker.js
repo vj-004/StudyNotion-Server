@@ -146,7 +146,7 @@ const work = async (job) => {
             {
                 $set: {
                     "ytCourses.$.status": playlistStatus.FAILED,
-                    "ytCourses.$.statusMessage" : "Please try again tomorrow. API rate limit reached"
+                    "ytCourses.$.statusMessage" : "Please try again after midnight. API rate limit reached"
                 }
             }
         );
