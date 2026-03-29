@@ -5,9 +5,9 @@ import { connectDB } from "../config/db.js";
 import dotenv from "dotenv";
 import Playlist from "../models/Playlist.js";
 import { GoogleGenAI } from "@google/genai";
+import IORedis from "ioredis";
 
 dotenv.config({path: "../.env"});
-console.log("Mongo URL:", process.env.MONGODB_URL);
 await connectDB();
 
 const getAllVideosData = async (playlist_id) => {
@@ -41,9 +41,8 @@ const getAllVideosData = async (playlist_id) => {
                 message: "Invalid Youtube URL"
             };
         }
-
-        title = data.snippet.title;
-        thumbnail = data.snippet.thumbnails.default;
+        title = data.items[0].snippet.title;
+        thumbnail = data.items[0].snippet.thumbnails.default;
 
     }
     catch(error){
@@ -104,10 +103,12 @@ const getAllVideosData = async (playlist_id) => {
     };
 }
 
+const redis = new IORedis(6379, '127.0.0.1');
+
 const work = async (job) => {
 
-
-    const {playlistId, playlistName, description, userId} = job.data;
+    
+    const {playlistId, userId} = job.data;
     const {status, title, thumbnail, snippets, message} = await getAllVideosData(playlistId);
 
     if(status === false){
@@ -128,6 +129,31 @@ const work = async (job) => {
         }
         return;
     }
+
+    const count = await redis.incr("gemini:daily:count");
+
+    // Set TTL only first time
+    if (count === 1) {
+      await redis.expire("gemini:daily:count", 86400);
+    }
+
+    if(count > 15){
+        const user = await User.findOneAndUpdate(
+            {
+                _id: userId,
+                "ytCourses.url_id": playlistId
+            },
+            {
+                $set: {
+                    "ytCourses.$.status": playlistStatus.FAILED,
+                    "ytCourses.$.statusMessage" : "Please try again tomorrow. API rate limit reached"
+                }
+            }
+        );
+        console.log('rate limit reached');
+        return;
+    }
+
 
     const prompt = `You are an AI system that converts a list of YouTube videos into a structured course.
 
@@ -209,6 +235,22 @@ const work = async (job) => {
             thumbnail,
         }
     });
+
+    const user = await User.findOneAndUpdate(
+        {
+            _id: userId,
+            "ytCourses.url_id": playlistId
+        },
+        {
+            $set: {
+                "ytCourses.$.playlist": playlist._id,
+                "ytCourses.$.status": playlistStatus.READY,
+                "ytCourses.$.statusMessage" : "Your youtube course is ready"
+            }
+        }
+    );
+
+    return;
 
 }
 

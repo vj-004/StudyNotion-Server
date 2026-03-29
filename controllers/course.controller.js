@@ -583,9 +583,7 @@ export const createYoutubeCourseV2 = async (req, res) => {
                         playlist: pL._id,
                         title: playlistName,
                         url_id: playlistURL,
-                        description: descp,
-                        status: playlistStatus.READY,
-                        statusMessage: "Your course is ready",
+                        description: descp
                     },
                     ytCourseProgress: {
                         playlistUrl: playlistURL,
@@ -599,9 +597,7 @@ export const createYoutubeCourseV2 = async (req, res) => {
                     playlist: pL,
                     title: playlistName,
                     url_id: playlistURL,
-                    description: descp,
-                    status: playlistStatus.READY,
-                    statusMessage: "Your course is ready",
+                    description: descp
                 },
                 ytCourseProgress: {
                     playlistUrl: playlistURL,
@@ -617,35 +613,8 @@ export const createYoutubeCourseV2 = async (req, res) => {
 
         }
 
-        const createCourseQueue = playlistQueue;
-        const queueResult = await createCourseQueue.add(`playlistId: ${playlistURL}`, {
-            playlistId: playlistURL,
-            playlistName,
-            description: descp,
-            userId,
-        });
-
-        await User.updateOne(
-            { _id: userId }, 
-            { $push: {
-                ytCourses: {
-                    playlist: null,
-                    title: playlistName,
-                    url_id: playlistURL,
-                    description: descp,
-                    status: playlistStatus.PROCESSING,
-                    statusMessage: "We are currently processing your course"
-                },
-                ytCourseProgress: {
-                    playlistUrl: playlistURL,
-                    isCompleted: []
-                }
-            }}
-        );
-
-        return returnResponse(res,200,true,"Successfully added job to queue: ", queueResult);
     
-        const {status, title, thumbnail, snippets} = await getAllVideosData(playlistURL);
+        const {status, title, snippets} = await getAllVideosData(playlistURL);
 
         if(status === false){
             return returnResponse(res,404,false,"The given playlist URL is not valid");
@@ -724,12 +693,7 @@ export const createYoutubeCourseV2 = async (req, res) => {
         const playlist = await Playlist.create({
             playlist_id: playlistURL,
             section: sections,
-            videosDetails: snippets,
-            status: playlistStatus.PROCESSING,
-            playlistDetails:{
-                title,
-                thumbnail,
-            }
+            videosDetails: snippets
         });
 
         // console.log('playlist: ', playlist);
@@ -771,6 +735,118 @@ export const createYoutubeCourseV2 = async (req, res) => {
             "message": "Playlist created and successfully added to user"
         });
 
+    }
+    catch(error){
+        console.log('Error in adding playlist');
+        console.log(error);
+        return res.status(500).json({
+            "success": false,
+            "message": "Server error in adding playlist"
+        });
+    }
+
+}
+
+export const createYoutubeCourseV3 = async (req, res) => {
+
+    const {playlistURL, playlistName, descp} = req.body;
+    const userId = req.user.id;
+
+    if(!playlistURL || !playlistName || !userId || !descp){
+        return returnResponse(res,404,false,"Please provide all the details");
+    }
+
+    try{
+
+        const user = await User.findById(userId);
+    
+        if(!user){
+            console.log('User not found');
+            return res.status(404).json({
+                "success": false,
+                "message": "user not found"
+            })
+        }
+
+        const exists = user.ytCourses.some(course => (course.url_id === playlistURL) && (course.status !== playlistStatus.FAILED));
+        if(exists){
+            return returnResponse(res,200, false, "Course is already present with the user");
+        }
+
+        const pL = await Playlist.findOne({
+            "playlist_id": playlistURL
+        });
+
+        if(pL){
+
+            let isCompletedList = [];
+            await User.updateOne(
+                { _id: userId }, 
+                { $push: {
+                    ytCourses: {
+                        playlist: pL._id,
+                        title: playlistName,
+                        url_id: playlistURL,
+                        description: descp,
+                        status: playlistStatus.READY,
+                        statusMessage: "Your course is ready",
+                    },
+                    ytCourseProgress: {
+                        playlistUrl: playlistURL,
+                        isCompleted: isCompletedList
+                    }
+                }}
+            );
+
+            const returnData = {
+                ytCourses: {
+                    playlist: pL,
+                    title: playlistName,
+                    url_id: playlistURL,
+                    description: descp,
+                    status: playlistStatus.READY,
+                    statusMessage: "Your course is ready",
+                },
+                ytCourseProgress: {
+                    playlistUrl: playlistURL,
+                    isCompleted: isCompletedList
+                }
+            }
+
+            return res.status(200).json({
+                "success": true,
+                "data": returnData,
+                "message": "Playlist created and successfully added to user, playlist existed before"
+            });
+
+        }
+
+        const createCourseQueue = playlistQueue;
+        const queueResult = await createCourseQueue.add(`playlistId: ${playlistURL}`, {
+            playlistId: playlistURL,
+            userId,
+        });
+
+        await User.updateOne(
+            { _id: userId }, 
+            { $push: {
+                ytCourses: {
+                    playlist: null,
+                    title: playlistName,
+                    url_id: playlistURL,
+                    description: descp,
+                    status: playlistStatus.PROCESSING,
+                    statusMessage: "We are currently processing your course"
+                },
+                ytCourseProgress: {
+                    playlistUrl: playlistURL,
+                    isCompleted: []
+                }
+            }}
+        );
+
+        return returnResponse(res,200,true,"Youtube is course has started processing", queueResult);
+    
     }
     catch(error){
         console.log('Error in adding playlist');
