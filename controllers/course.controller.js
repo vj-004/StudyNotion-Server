@@ -10,6 +10,8 @@ import Section from "../models/Section.js";
 import Playlist from "../models/Playlist.js";
 import CourseProgress from "../models/CourseProgress.js";
 import { GoogleGenAI } from "@google/genai";
+import { playlistStatus } from "../constants.js";
+import { playlistQueue } from "../config/playlistQueue.js";
 
 export const createCourse = async (req,res) => {
 
@@ -332,12 +334,12 @@ const getAllVideosData = async (playlist_id) => {
     let snippets = [];
     let pageToken = "";
     let maxRes = 50;
-
+    let thumbnail;
     let title;
     
     try{
 
-        const youtubePlaylistAPI = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlist_id}&fields=items(id,snippet(title))&key=${process.env.GOOGLE_API}`;
+        const youtubePlaylistAPI = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlist_id}&fields=items(id,snippet(title),snippet(thumbnails(default)))&key=${process.env.GOOGLE_API}`;
         const response = await fetch(
             youtubePlaylistAPI,
             {
@@ -359,6 +361,7 @@ const getAllVideosData = async (playlist_id) => {
         }
 
         title = data.snippet.title;
+        thumbnail = data.snippet.thumbnails.default;
 
     }
     catch(error){
@@ -398,6 +401,7 @@ const getAllVideosData = async (playlist_id) => {
     
     return {
         title,
+        thumbnail,
         videoids,
         snippets
     };
@@ -579,7 +583,9 @@ export const createYoutubeCourseV2 = async (req, res) => {
                         playlist: pL._id,
                         title: playlistName,
                         url_id: playlistURL,
-                        description: descp
+                        description: descp,
+                        status: playlistStatus.READY,
+                        statusMessage: "Your course is ready",
                     },
                     ytCourseProgress: {
                         playlistUrl: playlistURL,
@@ -593,7 +599,9 @@ export const createYoutubeCourseV2 = async (req, res) => {
                     playlist: pL,
                     title: playlistName,
                     url_id: playlistURL,
-                    description: descp
+                    description: descp,
+                    status: playlistStatus.READY,
+                    statusMessage: "Your course is ready",
                 },
                 ytCourseProgress: {
                     playlistUrl: playlistURL,
@@ -609,8 +617,35 @@ export const createYoutubeCourseV2 = async (req, res) => {
 
         }
 
+        const createCourseQueue = playlistQueue;
+        const queueResult = await createCourseQueue.add(`playlistId: ${playlistURL}`, {
+            playlistId: playlistURL,
+            playlistName,
+            description: descp,
+            userId,
+        });
+
+        await User.updateOne(
+            { _id: userId }, 
+            { $push: {
+                ytCourses: {
+                    playlist: null,
+                    title: playlistName,
+                    url_id: playlistURL,
+                    description: descp,
+                    status: playlistStatus.PROCESSING,
+                    statusMessage: "We are currently processing your course"
+                },
+                ytCourseProgress: {
+                    playlistUrl: playlistURL,
+                    isCompleted: []
+                }
+            }}
+        );
+
+        return returnResponse(res,200,true,"Successfully added job to queue: ", queueResult);
     
-        const {status, title, snippets} = await getAllVideosData(playlistURL);
+        const {status, title, thumbnail, snippets} = await getAllVideosData(playlistURL);
 
         if(status === false){
             return returnResponse(res,404,false,"The given playlist URL is not valid");
@@ -689,7 +724,12 @@ export const createYoutubeCourseV2 = async (req, res) => {
         const playlist = await Playlist.create({
             playlist_id: playlistURL,
             section: sections,
-            videosDetails: snippets
+            videosDetails: snippets,
+            status: playlistStatus.PROCESSING,
+            playlistDetails:{
+                title,
+                thumbnail,
+            }
         });
 
         // console.log('playlist: ', playlist);

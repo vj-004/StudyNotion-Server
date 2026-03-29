@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { playlistStatus } from "../constants.js";
 
 const UserSchema = new mongoose.Schema(
     {
@@ -80,6 +81,14 @@ const UserSchema = new mongoose.Schema(
                 description: {
                     type: String,
                     default: ""
+                },
+                status: {
+                    type: String,
+                    enum: [playlistStatus.PROCESSING, playlistStatus.READY, playlistStatus.FAILED],
+                },
+                statusMessage: {
+                    type: String,
+                    default: ""
                 }
             },
         ],
@@ -90,7 +99,8 @@ const UserSchema = new mongoose.Schema(
                 },
                 isCompleted: [
                     {
-                        type: String
+                        type: String,
+                        default: []
                     }
                 ]
                     

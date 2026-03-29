@@ -36,7 +36,23 @@ const PlaylistSchema = new mongoose.Schema(
                     default: ""
                 }
             }
-        ]
+        ],
+        playlistDetails: {
+            title: {
+                type: String,
+            },
+            thumbnail: {
+                url: {
+                    type: String,
+                },
+                width: {
+                    type: Number,
+                },
+                height: {
+                    type: Number
+                },
+            },
+        },
     }
 );
 
