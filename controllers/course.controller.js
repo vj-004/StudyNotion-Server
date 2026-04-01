@@ -793,7 +793,8 @@ export const createYoutubeCourseV3 = async (req, res) => {
                     },
                     ytCourseProgress: {
                         playlistUrl: playlistURL,
-                        isCompleted: isCompletedList
+                        isCompleted: isCompletedList,
+                        totalLectures: pL.videosDetails.length,
                     }
                 }}
             );
@@ -836,11 +837,13 @@ export const createYoutubeCourseV3 = async (req, res) => {
                     url_id: playlistURL,
                     description: descp,
                     status: playlistStatus.PROCESSING,
-                    statusMessage: "We are currently processing your course"
+                    statusMessage: "We are currently processing your course",
+                    playlistDetals: {}
                 },
                 ytCourseProgress: {
                     playlistUrl: playlistURL,
-                    isCompleted: []
+                    isCompleted: [],
+                    totalLectures: 0,
                 }
             }}
         );
@@ -945,34 +948,35 @@ export const getAllYtCourses = async (req,res) => {
 
 }
 
-// export const getYtCourseById = async (req,res) => {
+export const getYtCourseById = async (req,res) => {
 
-//     const userId = req.user.id;
-//     const {playlistId} = req.body;
-//     if(!userId){
-//         return returnResponse(res,404, false, "User not found");
-//     }
+    const userId = req.user.id;
+    const {playlistId} = req.body;
+    if(!userId){
+        return returnResponse(res,404, false, "User not found");
+    }
 
-//     if(!playlistId){
-//         return returnResponse(res,404, false, "Please enter the youtube course id");
-//     }
+    if(!playlistId){
+        return returnResponse(res,404, false, "Please enter the youtube course id");
+    }
+    // console.log('playlistId: ', playlistId);
+    try{    
 
-//     try{    
-
-//         const playlist = await Playlist.findById(playlistId);
-//         if(!playlist){
-//             console.log('Playlist not found');
-//             return res.status(404).json({
-//                 "success": false,
-//                 "message": "Playlist not found"
-//             })
-//         }
+        const playlist = await Playlist.find({playlist_id: playlistId});
+        if(!playlist){
+            console.log('Playlist not found');
+            return res.status(404).json({
+                "success": false,
+                "message": "Playlist not found"
+            })
+        }
         
-//         return returnResponse(res, 200, true, "All playlist were retreived", playlist);
+        return returnResponse(res, 200, true, "All playlist were retreived", playlist[0]);
 
 
-//     }catch(error){
-//         console.log('Error in getting youtube playlist', error);
-//     }
+    }catch(error){
+        console.log('Error in getting youtube playlist', error);
+        return returnResponse(res,500, false, "Internal server error");
+    }
 
-// }
+}

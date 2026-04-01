@@ -144,22 +144,12 @@ export const login = async(req,res) => {
         }
         const user = await User.findOne({ email })
         .populate("additionalDetails")
-        .populate({
-            path: "courses",
-            populate: {
-                path: "courseContent",
-                model: "Section",
-                populate: {
-                    path: "subSection", // or "subSections" (check exact field name)
-                    model: "SubSection"
-                }
-            }
-        })
-        .populate({
-            path: "ytCourses.playlist",  // populate the playlist field inside ytCourses array
-            model: "Playlist"            // make sure this matches the Mongoose model name
-        })
         .exec();
+
+        // console.log('user: ', user);
+        for(const ytCourse of user.ytCourses){
+            ytCourse.playlist = null;
+        }
 
         if(!user){
             return returnResponse(res,401,false,"User does not exist, Please Sign Up");
