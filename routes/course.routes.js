@@ -1,10 +1,11 @@
 import { Router } from "express";
 import auth, { isAdmin, isInstructor, isStudent } from "../middlewares/auth.js";
-import { createCourse, createYoutubeCourse, createYoutubeCourseV2, createYoutubeCourseV3, deleteCourse, editCourse, getAllYtCourses, getCourseByCategory, getCourseDetails, getDraftCourse, getInstructorCourses, markComplete, showAllCourses } from "../controllers/course.controller.js";
+import { createCourse, createYoutubeCourse, createYoutubeCourseV2, createYoutubeCourseV3, deleteCourse, editCourse, getAllYtCourses, getCourseByCategory, getCourseDetails, getDraftCourse, getInstructorCourses, getYtCourseById, markComplete, showAllCourses } from "../controllers/course.controller.js";
 import { createSection, deleteSection, updateSection } from "../controllers/section.controller.js";
 import { createSubSection, deleteSubSection, updateSubSection } from "../controllers/subSection.controller.js";
 import { categoryPageDetails, createCategory, showAllCategories } from "../controllers/category.controller.js";
 import { createRating, getAllRatings, getAvgRating } from "../controllers/ratingsAndReview.controller.js";
+import Course from "../models/Course.js";
 
 
 export const CourseRoutes = Router();
@@ -43,6 +44,8 @@ CourseRoutes.delete('/deleteCourse', auth, isInstructor, deleteCourse);
 CourseRoutes.post('/getFullCourseDetails', getCourseDetails);
 // create a new youtube playlist course
 CourseRoutes.post('/createYtCourse', auth, isStudent, createYoutubeCourseV3);
+//Get 1 youtube course by playlistId
+CourseRoutes.post('/ytCourseDetails', auth, isStudent, getYtCourseById);
 
 // get all the youtube playlist courses
 CourseRoutes.get('/getAllYtCourses', auth, isStudent, getAllYtCourses);

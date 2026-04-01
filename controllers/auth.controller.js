@@ -147,6 +147,9 @@ export const login = async(req,res) => {
         .exec();
 
         // console.log('user: ', user);
+        for(const ytCourse of user.ytCourses){
+            ytCourse.playlist = null;
+        }
 
         if(!user){
             return returnResponse(res,401,false,"User does not exist, Please Sign Up");
