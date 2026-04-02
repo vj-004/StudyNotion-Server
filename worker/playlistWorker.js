@@ -107,148 +107,160 @@ const redis = new IORedis(6379, '127.0.0.1');
 
 const work = async (job) => {
 
-    
-    const {playlistId, userId} = job.data;
-    const {status, title, thumbnail, snippets, message} = await getAllVideosData(playlistId);
+    try{
+        
+        const {playlistId, userId} = job.data;
+        const {status, title, thumbnail, snippets, message} = await getAllVideosData(playlistId);
 
-    if(status === false){
-        const user = await User.findOneAndUpdate(
-            {
-                _id: userId,
-                "ytCourses.url_id": playlistId
-            },
-            {
-                $set: {
-                    "ytCourses.$.status": playlistStatus.FAILED,
-                    "ytCourses.$.statusMessage" : message
-                }
-            }
-        );
-        if(user === null){
-            console.log('Wrong data sent to worker');
-        }
-        return;
-    }
+        // console.log('playlistId: ', playlistId);
+        // console.log('status: ', status);
+        // console.log('title: ', title);
+        // console.log('thumbnail: ', thumbnail);
+        // console.log('message: ', message);
 
-    const count = await redis.incr("gemini:daily:count");
-
-    // Set TTL only first time
-    if (count === 1) {
-      await redis.expire("gemini:daily:count", 86400);
-    }
-
-    if(count > 15){
-        const user = await User.findOneAndUpdate(
-            {
-                _id: userId,
-                "ytCourses.url_id": playlistId
-            },
-            {
-                $set: {
-                    "ytCourses.$.status": playlistStatus.FAILED,
-                    "ytCourses.$.statusMessage" : "Please try again after midnight. API rate limit reached"
-                }
-            }
-        );
-        console.log('rate limit reached');
-        return;
-    }
-
-
-    const prompt = `You are an AI system that converts a list of YouTube videos into a structured course.
-
-        Each item in the input is an object with:
-        - title
-        - description
-        - videoId (this is the videoId)
-
-        Your task is to group videos into logical sections (like a course curriculum).
-
-        Instructions:
-        1. Use the video title as the primary signal to understand the topic.
-        2. Use the description ONLY if it contains meaningful information about the video content.
-        - Ignore descriptions that contain only links, promotions, or irrelevant text.
-        3. Group videos into sections based on similarity of topics.
-        4. Maintain the original playlist order while grouping.
-
-        Section Rules:
-        - Each section must have:
-        - "title": a concise name describing the topic
-        - "videoIds": an ordered list of video IDs (use resourceId.videoId)
-
-        Important Constraints:
-        - If the topic of videos is unclear → DO NOT group them
-        - If videos appear unrelated → DO NOT group them
-        - If a video is long (e.g., ~1–2 hours) → if necessary keep it as a separate section
-        - If you are NOT confident → create one section per video
-
-        Fallback Behavior:
-        If meaningful grouping is NOT possible, return one section per video.
-
-        Output Requirements (STRICT):
-        - Return ONLY valid JSON
-        - Output MUST be an array of objects
-        - Each object MUST have:
-        - "title": string
-        - "videoIds": array of strings
-        - Do NOT include any extra fields
-        - Do NOT include explanations or text outside JSON
-
-        Input:
-        ${JSON.stringify(snippets)}`;
-
-    const ai = new GoogleGenAI({});
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: {
-            type: "array",
-            items: {
-                type: "object",
-                properties: {
-                title: { type: "string" },
-                videoIds: {
-                    type: "array",
-                    items: { type: "string" }
-                }
+        if(status === false){
+            const user = await User.findOneAndUpdate(
+                {
+                    _id: userId,
+                    "ytCourses.url_id": playlistId
                 },
-                required: ["title", "videoIds"]
+                {
+                    $set: {
+                        "ytCourses.$.status": playlistStatus.FAILED,
+                        "ytCourses.$.statusMessage" : message
+                    }
+                }
+            );
+            if(user === null){
+                console.log('Wrong data sent to worker');
             }
+            return;
+        }
+
+        const count = await redis.incr("gemini:daily:count");
+
+        // Set TTL only first time
+        if (count === 1) {
+        await redis.expire("gemini:daily:count", 86400);
+        }
+
+        if(count > 15){
+            const user = await User.findOneAndUpdate(
+                {
+                    _id: userId,
+                    "ytCourses.url_id": playlistId
+                },
+                {
+                    $set: {
+                        "ytCourses.$.status": playlistStatus.FAILED,
+                        "ytCourses.$.statusMessage" : "Please try again after midnight. API rate limit reached"
+                    }
+                }
+            );
+            console.log('rate limit reached');
+            return;
+        }
+
+
+        const prompt = `You are an AI system that converts a list of YouTube videos into a structured course.
+
+            Each item in the input is an object with:
+            - title
+            - description
+            - videoId (this is the videoId)
+
+            Your task is to group videos into logical sections (like a course curriculum).
+
+            Instructions:
+            1. Use the video title as the primary signal to understand the topic.
+            2. Use the description ONLY if it contains meaningful information about the video content.
+            - Ignore descriptions that contain only links, promotions, or irrelevant text.
+            3. Group videos into sections based on similarity of topics.
+            4. Maintain the original playlist order while grouping.
+
+            Section Rules:
+            - Each section must have:
+            - "title": a concise name describing the topic
+            - "videoIds": an ordered list of video IDs (use resourceId.videoId)
+
+            Important Constraints:
+            - If the topic of videos is unclear → DO NOT group them
+            - If videos appear unrelated → DO NOT group them
+            - If a video is long (e.g., ~1–2 hours) → if necessary keep it as a separate section
+            - If you are NOT confident → create one section per video
+
+            Fallback Behavior:
+            If meaningful grouping is NOT possible, return one section per video.
+
+            Output Requirements (STRICT):
+            - Return ONLY valid JSON
+            - Output MUST be an array of objects
+            - Each object MUST have:
+            - "title": string
+            - "videoIds": array of strings
+            - Do NOT include any extra fields
+            - Do NOT include explanations or text outside JSON
+
+            Input:
+            ${JSON.stringify(snippets)}`;
+
+        const ai = new GoogleGenAI({});
+        const response = await ai.models.generateContent({
+            model: "gemini-2.5-flash",
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: {
+                type: "array",
+                items: {
+                    type: "object",
+                    properties: {
+                    title: { type: "string" },
+                    videoIds: {
+                        type: "array",
+                        items: { type: "string" }
+                    }
+                    },
+                    required: ["title", "videoIds"]
+                }
+                }
             }
-        }
-    });
+        });
 
-    // console.log('response: ', response);
+        // console.log('response: ', response);
 
-    const result = response.text;
-    const sections = JSON.parse(result);
+        const result = response.text;
+        const sections = JSON.parse(result);
 
-    const playlist = await Playlist.create({
-        playlist_id: playlistId,
-        section: sections,
-        videosDetails: snippets,
-        status: playlistStatus.PROCESSING,
-        playlistDetails:{
-            title,
-            thumbnail,
-        }
-    });
-
-    const user = await User.findOneAndUpdate(
-        {
-            _id: userId,
-            "ytCourses.url_id": playlistId
-        },
-        {
-            $set: {
-                "ytCourses.$.playlist": playlist._id,
-                "ytCourses.$.status": playlistStatus.READY,
-                "ytCourses.$.statusMessage" : "Your youtube course is ready"
+        const playlist = await Playlist.create({
+            playlist_id: playlistId,
+            section: sections,
+            videosDetails: snippets,
+            status: playlistStatus.PROCESSING,
+            playlistDetails:{
+                title,
+                thumbnail,
             }
-        }
-    );
+        });
+
+        const user = await User.findOneAndUpdate(
+            {
+                _id: userId,
+                "ytCourses.url_id": playlistId
+            },
+            {
+                $set: {
+                    "ytCourses.$.playlist": playlist._id,
+                    "ytCourses.$.status": playlistStatus.READY,
+                    "ytCourses.$.statusMessage" : "Your youtube course is ready",
+                    "ytCourses.$.playlistDetails.thumbnail": thumbnail,
+                }
+            }
+        );
+    }
+    catch(error){
+        console.log('Error in creating ytCourse for user', error);
+    }
 
     return;
 

@@ -810,7 +810,8 @@ export const createYoutubeCourseV3 = async (req, res) => {
                 },
                 ytCourseProgress: {
                     playlistUrl: playlistURL,
-                    isCompleted: isCompletedList
+                    isCompleted: isCompletedList,
+                    totalLectures: pL.videosDetails.length,
                 }
             }
 
@@ -838,7 +839,7 @@ export const createYoutubeCourseV3 = async (req, res) => {
                     description: descp,
                     status: playlistStatus.PROCESSING,
                     statusMessage: "We are currently processing your course",
-                    playlistDetals: {}
+                    playlistDetails: {}
                 },
                 ytCourseProgress: {
                     playlistUrl: playlistURL,
@@ -848,7 +849,23 @@ export const createYoutubeCourseV3 = async (req, res) => {
             }}
         );
 
-        return returnResponse(res,200,true,"Youtube is course has started processing", queueResult);
+        const returnData = {
+            ytCourses: {
+                playlist: null,
+                title: playlistName,
+                url_id: playlistURL,
+                description: descp,
+                status: playlistStatus.PROCESSING,
+                statusMessage: "We are currently processing your course",
+            },
+            ytCourseProgress: {
+                playlistUrl: playlistURL,
+                isCompleted: [],
+                totalLectures: null,
+            }
+        }
+
+        return returnResponse(res,200,true,"Youtube is course has started processing", returnData);
     
     }
     catch(error){
@@ -980,3 +997,32 @@ export const getYtCourseById = async (req,res) => {
     }
 
 }
+
+// export const getProcessingCourses = async (req,res) => {
+    
+//     const userId = req.user.id;
+//     if(!userId){
+//         return returnResponse(res,404, false, "User not found");
+//     }
+
+//     try{    
+
+//         const user = await User.find({_id: userId});
+//         if(!user){
+//             console.log('User not found');
+//             return res.status(404).json({
+//                 "success": false,
+//                 "message": "User not found"
+//             })
+//         }
+
+//         const processingCourses = user?.ytCourses.filter((course) => course.status === playlistStatus.PROCESSING);        
+//         return returnResponse(res, 200, true, "All processing courses received", processingCourses);
+
+
+//     }catch(error){
+//         console.log('Error in getting processing courses of the user', error);
+//         return returnResponse(res,500, false, "Internal server error");
+//     }
+
+// }

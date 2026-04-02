@@ -51,6 +51,7 @@ CourseRoutes.post('/ytCourseDetails', auth, isStudent, getYtCourseById);
 CourseRoutes.get('/getAllYtCourses', auth, isStudent, getAllYtCourses);
 // mark a youtube course complete
 CourseRoutes.post('/markYtCourse', auth, isStudent, markComplete);
+// Get all the courses which are processing,
 
 // ********************************************************************************************************
 //                                      Category routes (Only by Admin)
