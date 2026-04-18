@@ -246,15 +246,21 @@ const work = async (job) => {
         const user = await User.findOneAndUpdate(
             {
                 _id: userId,
-                "ytCourses.url_id": playlistId
             },
             {
                 $set: {
-                    "ytCourses.$.playlist": playlist._id,
-                    "ytCourses.$.status": playlistStatus.READY,
-                    "ytCourses.$.statusMessage" : "Your youtube course is ready",
-                    "ytCourses.$.playlistDetails.thumbnail": thumbnail,
+                    "ytCourses.$[course].playlist": playlist._id,
+                    "ytCourses.$[course].status": playlistStatus.READY,
+                    "ytCourses.$[course].statusMessage": "Your youtube course is ready",
+                    "ytCourses.$[course].playlistDetails.thumbnail": thumbnail,
+                    "ytCourseProgress.$[progress].totalLectures": snippets.length,
                 }
+            },
+            {
+                arrayFilters: [
+                    { "course.url_id": playlistId },
+                    { "progress.playlistUrl": playlistId },
+                ],
             }
         );
     }
@@ -277,8 +283,23 @@ worker.on("completed", job => {
     console.log(`Job ${job.id} completed`);
 });
 
-worker.on("failed", (job, err) => {
+worker.on("failed", async (job, err) => {
     console.log(`Job ${job?.id} failed:`, err);
+
+    const {playlistId, userId} = job.data;
+
+    const user = await User.findOneAndUpdate(
+        {
+            _id: userId,
+            "ytCourses.url_id": playlistId
+        },
+        {
+            $set: {
+                "ytCourses.$.status": playlistStatus.FAILED,
+            }
+        }
+    );
+
 });
 
 worker.on("error", err => {
