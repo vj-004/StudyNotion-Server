@@ -21,7 +21,7 @@ const getAllVideosData = async (playlist_id) => {
     
     try{
 
-        const youtubePlaylistAPI = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlist_id}&fields=items(id,snippet(title),snippet(thumbnails(default)))&key=${process.env.GOOGLE_API}`;
+        const youtubePlaylistAPI = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlist_id}&fields=items(id,snippet(title),snippet(thumbnails(medium )))&key=${process.env.GOOGLE_API}`;
         const response = await fetch(
             youtubePlaylistAPI,
             {
