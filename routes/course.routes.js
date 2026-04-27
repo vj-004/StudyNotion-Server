@@ -1,6 +1,6 @@
 import { Router } from "express";
 import auth, { isAdmin, isInstructor, isStudent } from "../middlewares/auth.js";
-import { createCourse, createYoutubeCourse, createYoutubeCourseV2, createYoutubeCourseV3, deleteCourse, editCourse, getAllYtCourses, getCourseByCategory, getCourseDetails, getDraftCourse, getInstructorCourses, getYtCourseById, markComplete, showAllCourses } from "../controllers/course.controller.js";
+import { createCourse, createYoutubeCourse, createYoutubeCourseV2, createYoutubeCourseV3, deleteCourse, editCourse, getAllUserYtCourses, getAllYtPlaylists, getCourseByCategory, getCourseDetails, getDraftCourse, getInstructorCourses, getYtCourseById, markComplete, showAllCourses } from "../controllers/course.controller.js";
 import { createSection, deleteSection, updateSection } from "../controllers/section.controller.js";
 import { createSubSection, deleteSubSection, updateSubSection } from "../controllers/subSection.controller.js";
 import { categoryPageDetails, createCategory, showAllCategories } from "../controllers/category.controller.js";
@@ -48,10 +48,11 @@ CourseRoutes.post('/createYtCourse', auth, isStudent, createYoutubeCourseV3);
 CourseRoutes.post('/ytCourseDetails', auth, isStudent, getYtCourseById);
 
 // get all the youtube playlist courses
-CourseRoutes.get('/getAllYtCourses', auth, isStudent, getAllYtCourses);
+CourseRoutes.get('/getAllUserYtCourses', auth, isStudent, getAllUserYtCourses);
 // mark a youtube course complete
 CourseRoutes.post('/markYtCourse', auth, isStudent, markComplete);
-// Get all the courses which are processing,
+//get all the playlist for YtCourses
+CourseRoutes.get('/getAllYtPlaylists', getAllYtPlaylists);
 
 // ********************************************************************************************************
 //                                      Category routes (Only by Admin)

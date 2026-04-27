@@ -936,7 +936,7 @@ export const markComplete = async (req, res) => {
 
 }
 
-export const getAllYtCourses = async (req,res) => {
+export const getAllUserYtCourses = async (req,res) => {
 
     const userId = req.user.id;
     if(!userId){
@@ -961,6 +961,27 @@ export const getAllYtCourses = async (req,res) => {
 
     }catch(error){
         console.log('Error in getting youtube playlists', error);
+        return returnResponse(res,500, false, "Internal Server Error");
+    }
+
+}
+
+export const getAllYtPlaylists = async (req,res) => {
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = 15;
+    const skip = (page-1)*limit;
+
+    try {
+
+        const totalPlaylist = await Playlist.countDocuments();
+        const totalPages = Math.ceil(totalPlaylist / limit);
+        const YtCourses = await Playlist.find({}).select("playlistDetails playlist_id").skip(skip).limit(limit).lean();
+        return returnResponse(res,200, true, "Youtube courses retreived", {YtCourses, totalPages});
+        
+    } catch (error) {
+        console.log('Error in returning all YtCourses');
+        return returnResponse(res,500, false, "Internal Server Error");
     }
 
 }
