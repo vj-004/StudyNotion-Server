@@ -21,7 +21,7 @@ const getAllVideosData = async (playlist_id) => {
     
     try{
 
-        const youtubePlaylistAPI = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlist_id}&fields=items(id,snippet(title),snippet(thumbnails(medium )))&key=${process.env.GOOGLE_API}`;
+        const youtubePlaylistAPI = `https://youtube.googleapis.com/youtube/v3/playlists?part=snippet&id=${playlist_id}&fields=items(id,snippet(title),snippet(thumbnails(medium)))&key=${process.env.GOOGLE_API}`;
         const response = await fetch(
             youtubePlaylistAPI,
             {
@@ -42,7 +42,7 @@ const getAllVideosData = async (playlist_id) => {
             };
         }
         title = data.items[0].snippet.title;
-        thumbnail = data.items[0].snippet.thumbnails.default;
+        thumbnail = data.items[0].snippet.thumbnails.medium;
 
     }
     catch(error){
@@ -112,11 +112,7 @@ const work = async (job) => {
         const {playlistId, userId} = job.data;
         const {status, title, thumbnail, snippets, message} = await getAllVideosData(playlistId);
 
-        // console.log('playlistId: ', playlistId);
-        // console.log('status: ', status);
-        // console.log('title: ', title);
         // console.log('thumbnail: ', thumbnail);
-        // console.log('message: ', message);
 
         if(status === false){
             const user = await User.findOneAndUpdate(
@@ -135,6 +131,13 @@ const work = async (job) => {
                 console.log('Wrong data sent to worker');
             }
             return;
+        }
+
+        
+        const isPlaylist = await Playlist.find({playlist_id: playlistId});
+
+        if(isPlaylist){
+            return;    
         }
 
         const count = await redis.incr("gemini:daily:count");
